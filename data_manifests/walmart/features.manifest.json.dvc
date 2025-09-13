@@ -1,0 +1,5 @@
+outs:
+- md5: 146390a7ae7048b4659d5bde9c78ed87
+  size: 219
+  hash: md5
+  path: features.manifest.json

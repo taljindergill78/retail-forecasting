@@ -1,0 +1,5 @@
+outs:
+- md5: 882c34a1ba299d595e664a3fc504a8ae
+  size: 213
+  hash: md5
+  path: stores.manifest.json
