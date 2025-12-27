@@ -35,5 +35,23 @@ CREATE TABLE fact_sales_weekly (
   PRIMARY KEY (store_id, dept_id, week_date)
 );
 
+-- 4) Staging Table (Load the new data into a staging table fact_sales_weekly_stg, Run SQL to upsert into final fact table, Clear staging)
+CREATE TABLE IF NOT EXISTS fact_sales_weekly_stg (
+  store_id      INT,
+  dept_id       INT,
+  week_date     DATE,
+  weekly_sales  NUMERIC(12,2),
+  is_holiday    BOOLEAN,
+  temperature   NUMERIC(6,2),
+  fuel_price    NUMERIC(6,3),
+  markdown1     NUMERIC(12,2),
+  markdown2     NUMERIC(12,2),
+  markdown3     NUMERIC(12,2),
+  markdown4     NUMERIC(12,2),
+  markdown5     NUMERIC(12,2),
+  cpi           NUMERIC(12,7),
+  unemployment  NUMERIC(6,3)
+);
+
 -- Helpful indexes (speed up time-based filters / joins)
 CREATE INDEX IF NOT EXISTS idx_sales_week_date ON fact_sales_weekly(week_date);
