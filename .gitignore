@@ -10,5 +10,7 @@ __pycache__/
 # OS/editor
 .DS_Store
 
+Guideliness.txt
+
 # Data (never store big data in Git)
 data/
