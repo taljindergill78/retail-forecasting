@@ -14,3 +14,12 @@ Guideliness.txt
 
 # Data (never store big data in Git)
 data/
+
+# Docker build artifacts
+*.tar
+*.tar.gz
+*.zip
+
+# Lambda deployment packages
+infra/lambdas/*/*.tar
+infra/lambdas/*/*.zip

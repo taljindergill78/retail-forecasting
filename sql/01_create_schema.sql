@@ -58,7 +58,7 @@ CREATE TABLE retailds.fact_sales_weekly (
   PRIMARY KEY (store_id, dept_id, week_date)
 );
 
--- 7) Staging table
+-- 7) Staging tables
 CREATE TABLE retailds.fact_sales_weekly_stg (
   store_id      INT,
   dept_id       INT,
@@ -76,6 +76,20 @@ CREATE TABLE retailds.fact_sales_weekly_stg (
   unemployment  NUMERIC(6,3)
 );
 
+CREATE TABLE IF NOT EXISTS retailds.dim_store_stg (
+  store_id   INT,
+  store_type CHAR(1),
+  store_size INT
+);
+
+CREATE TABLE IF NOT EXISTS retailds.dim_dept_stg (
+  dept_id INT
+);
+
 -- 8) Helpful index
 CREATE INDEX IF NOT EXISTS idx_sales_week_date
 ON retailds.fact_sales_weekly(week_date);
+
+-- Helpful indexes for faster merge
+CREATE INDEX IF NOT EXISTS idx_dim_store_stg_store_id ON retailds.dim_store_stg(store_id);
+CREATE INDEX IF NOT EXISTS idx_dim_dept_stg_dept_id ON retailds.dim_dept_stg(dept_id);
