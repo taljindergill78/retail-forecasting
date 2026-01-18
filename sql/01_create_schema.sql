@@ -93,3 +93,5 @@ ON retailds.fact_sales_weekly(week_date);
 -- Helpful indexes for faster merge
 CREATE INDEX IF NOT EXISTS idx_dim_store_stg_store_id ON retailds.dim_store_stg(store_id);
 CREATE INDEX IF NOT EXISTS idx_dim_dept_stg_dept_id ON retailds.dim_dept_stg(dept_id);
+CREATE INDEX IF NOT EXISTS idx_fact_store_dept ON retailds.fact_sales_weekly(store_id, dept_id);
+CREATE INDEX IF NOT EXISTS idx_fact_composite ON retailds.fact_sales_weekly(store_id, dept_id, week_date);

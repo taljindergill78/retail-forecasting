@@ -23,3 +23,9 @@ data/
 # Lambda deployment packages
 infra/lambdas/*/*.tar
 infra/lambdas/*/*.zip
+
+# Environment variables (NEVER commit secrets!)
+.env
+.env.local
+.env.*.local
+*.env
