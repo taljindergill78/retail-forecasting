@@ -45,6 +45,7 @@ src/model/testing.ipynb
 models/*.pkl
 models/*.txt
 models/*.cbm
+models/*.json
 !models/.gitkeep
 
 # CatBoost training artifacts (auto-generated, not needed)
