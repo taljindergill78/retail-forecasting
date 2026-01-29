@@ -34,6 +34,17 @@ models:
     iterations: 1000
     early_stopping_rounds: 50
 
+  xgboost:
+    learning_rate: 0.05
+    max_depth: 6
+    subsample: 0.8
+    n_estimators: 1000
+    early_stopping_rounds: 50
+
+  # Ensemble (used when best model is an ensemble)
+  ensemble:
+    method: weighted  # 'simple' or 'weighted'
+
 # Evaluation parameters
 evaluation:
   holiday_weight: 5.0  # Weight for holiday weeks in WMAE

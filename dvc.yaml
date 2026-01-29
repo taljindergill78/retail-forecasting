@@ -3,6 +3,9 @@
 # This file defines the complete ML pipeline stages.
 # Run `dvc repro` to execute the entire pipeline.
 # Run `dvc status` to check what needs to be rerun.
+#
+# Note: src/model/evaluate.py is a library (used by run_baselines.py and train.py),
+# not a script — it's listed as a dep in baselines and train stages.
 
 stages:
   split:
@@ -18,10 +21,21 @@ stages:
       - split.train_end_date
       - split.val_end_date
 
-  features:
-    cmd: python src/features/build.py
+  eda:
+    cmd: python src/eda/eda.py
     deps:
-      - src/features/build.py
+      - src/eda/eda.py
+      - data/splits/train.csv
+      - data/splits/val.csv
+      - data/splits/test.csv
+    outs:
+      - reports/eda/figures
+      - reports/eda/tables
+
+  features:
+    cmd: python src/features/feature_eng.py
+    deps:
+      - src/features/feature_eng.py
       - data/splits/train.csv
       - data/splits/val.csv
       - data/splits/test.csv
@@ -60,12 +74,14 @@ stages:
       - data/baseline_results.csv
       - params.yaml
     outs:
-      - models/best_model.pkl
+      - models/best_model.json
       - models/best_model.txt
       - models/best_model.cbm
       - models/best_model_meta.pkl
       - data/model_comparison.csv
       - data/final_test_results.json
+      - data/test_predictions.csv
+      - data/test_predictions_all
     metrics:
       - data/model_comparison.csv
       - data/final_test_results.json
@@ -75,13 +91,23 @@ stages:
       - models.lightgbm.learning_rate
       - models.catboost.learning_rate
       - models.catboost.depth
+      - models.xgboost.learning_rate
+      - models.xgboost.max_depth
+      - models.xgboost.subsample
+      - evaluation.holiday_weight
 
   evaluate:
     cmd: python src/model/evaluate_models.py
     deps:
       - src/model/evaluate_models.py
+      - src/model/evaluate.py
       - data/model_comparison.csv
-      - data/splits/val_features.csv
+      - data/final_test_results.json
+      - data/splits/test_features.csv
+      - data/test_predictions_all
     outs:
       - reports/model_evaluation_report.csv
-      - reports/figures/*.png
+      - reports/figures
+    params:
+      - evaluation.holiday_weight
+      - evaluation.n_plot_samples

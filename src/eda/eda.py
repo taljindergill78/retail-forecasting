@@ -25,10 +25,10 @@ sys.path.insert(0, str(project_root))
 plt.style.use('seaborn-v0_8-darkgrid')
 sns.set_palette("husl")
 
-# Create output directories
+# Create output directories (eda/ subdir so DVC pipeline doesn't conflict with evaluate stage)
 REPORTS_DIR = project_root / "reports"
-FIGURES_DIR = REPORTS_DIR / "figures"
-TABLES_DIR = REPORTS_DIR / "tables"
+FIGURES_DIR = REPORTS_DIR / "eda" / "figures"
+TABLES_DIR = REPORTS_DIR / "eda" / "tables"
 
 FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 TABLES_DIR.mkdir(parents=True, exist_ok=True)
