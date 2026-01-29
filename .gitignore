@@ -10,7 +10,15 @@ __pycache__/
 # OS/editor
 .DS_Store
 
+# Documentation files (personal notes, not for GitHub)
 Guideliness.txt
+current_progress.txt
+reports/*.md
+GITIGNORE_EXPLANATION.md
+# Keep official README files
+!README.md
+!etl/README.md
+!sql/README.md
 
 # Data (never store big data in Git)
 data/
@@ -29,3 +37,22 @@ infra/lambdas/*/*.zip
 .env.local
 .env.*.local
 *.env
+
+# Jupyter notebooks (testing/experimental)
+src/model/testing.ipynb
+
+# Model artifacts (tracked by DVC)
+models/*.pkl
+models/*.txt
+models/*.cbm
+!models/.gitkeep
+
+# CatBoost training artifacts (auto-generated, not needed)
+catboost_info/
+
+# Reports (generated files - ignore all generated content)
+reports/figures/
+reports/tables/
+reports/*.md
+reports/*.csv
+!reports/.gitkeep

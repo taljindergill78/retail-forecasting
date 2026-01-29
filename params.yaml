@@ -1,0 +1,40 @@
+# Pipeline Parameters
+# 
+# This file contains all configurable parameters for the ML pipeline.
+# Modify these values and run `dvc repro` to rerun affected stages.
+
+# Data splitting parameters
+split:
+  train_end_date: '2011-12-31'  # Last day of training set
+  val_end_date: '2012-06-30'    # Last day of validation set
+
+# Feature engineering parameters
+features:
+  negative_sales_strategy: 'clip'  # Options: 'clip', 'keep', 'flag'
+  lags: [1, 2, 4, 52]              # Lag periods for target variable
+  rolling_windows: [4, 8]          # Rolling window sizes
+
+# Model hyperparameters
+models:
+  linear:
+    alpha: 1.0  # Ridge regularization strength
+  
+  lightgbm:
+    num_leaves: 31
+    learning_rate: 0.05
+    feature_fraction: 0.9
+    bagging_fraction: 0.8
+    bagging_freq: 5
+    num_boost_round: 1000
+    early_stopping_rounds: 50
+  
+  catboost:
+    learning_rate: 0.05
+    depth: 6
+    iterations: 1000
+    early_stopping_rounds: 50
+
+# Evaluation parameters
+evaluation:
+  holiday_weight: 5.0  # Weight for holiday weeks in WMAE
+  n_plot_samples: 5     # Number of series to plot in visualizations

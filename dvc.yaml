@@ -1,0 +1,87 @@
+# DVC Pipeline Definition
+# 
+# This file defines the complete ML pipeline stages.
+# Run `dvc repro` to execute the entire pipeline.
+# Run `dvc status` to check what needs to be rerun.
+
+stages:
+  split:
+    cmd: python src/data/split.py
+    deps:
+      - src/data/split.py
+      - sql/02_create_analytics_view.sql
+    outs:
+      - data/splits/train.csv
+      - data/splits/val.csv
+      - data/splits/test.csv
+    params:
+      - split.train_end_date
+      - split.val_end_date
+
+  features:
+    cmd: python src/features/build.py
+    deps:
+      - src/features/build.py
+      - data/splits/train.csv
+      - data/splits/val.csv
+      - data/splits/test.csv
+      - params.yaml
+    outs:
+      - data/splits/train_features.csv
+      - data/splits/val_features.csv
+      - data/splits/test_features.csv
+    params:
+      - features.negative_sales_strategy
+      - features.lags
+      - features.rolling_windows
+
+  baselines:
+    cmd: python src/model/run_baselines.py
+    deps:
+      - src/model/run_baselines.py
+      - src/model/baseline.py
+      - src/model/evaluate.py
+      - data/splits/train.csv
+      - data/splits/val.csv
+    outs:
+      - data/baseline_results.csv
+      - data/baseline_segments_all.csv
+    metrics:
+      - data/baseline_results.csv
+
+  train:
+    cmd: python src/model/train.py
+    deps:
+      - src/model/train.py
+      - src/model/evaluate.py
+      - data/splits/train_features.csv
+      - data/splits/val_features.csv
+      - data/splits/test_features.csv
+      - data/baseline_results.csv
+      - params.yaml
+    outs:
+      - models/best_model.pkl
+      - models/best_model.txt
+      - models/best_model.cbm
+      - models/best_model_meta.pkl
+      - data/model_comparison.csv
+      - data/final_test_results.json
+    metrics:
+      - data/model_comparison.csv
+      - data/final_test_results.json
+    params:
+      - models.linear.alpha
+      - models.lightgbm.num_leaves
+      - models.lightgbm.learning_rate
+      - models.catboost.learning_rate
+      - models.catboost.depth
+
+  evaluate:
+    cmd: python src/model/evaluate_models.py
+    deps:
+      - src/model/evaluate_models.py
+      - data/model_comparison.csv
+      - data/splits/val_features.csv
+    outs:
+      - reports/model_evaluation_report.csv
+      - reports/figures/*.png
