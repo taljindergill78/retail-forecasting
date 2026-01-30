@@ -6,13 +6,35 @@
 #
 # Note: src/model/evaluate.py is a library (used by run_baselines.py and train.py),
 # not a script — it's listed as a dep in baselines and train stages.
+#
+# Train stage: "models" is a directory; the script writes best_model_meta.pkl and
+# exactly one of best_model.txt / .cbm / .json (depending on which model wins).
 
 stages:
+  manifests:
+    cmd: python tools/run_manifests.py
+    deps:
+      - tools/run_manifests.py
+      - tools/make_manifest.py
+      - params.yaml
+    outs:
+      - data_manifests/walmart/train.manifest.json
+      - data_manifests/walmart/features.manifest.json
+      - data_manifests/walmart/stores.manifest.json
+    params:
+      - manifests.train_s3_uri
+      - manifests.features_s3_uri
+      - manifests.stores_s3_uri
+
   split:
     cmd: python src/data/split.py
     deps:
       - src/data/split.py
+      - src/config.py
       - sql/02_create_analytics_view.sql
+      - data_manifests/walmart/train.manifest.json
+      - data_manifests/walmart/features.manifest.json
+      - data_manifests/walmart/stores.manifest.json
     outs:
       - data/splits/train.csv
       - data/splits/val.csv
@@ -36,6 +58,7 @@ stages:
     cmd: python src/features/feature_eng.py
     deps:
       - src/features/feature_eng.py
+      - src/config.py
       - data/splits/train.csv
       - data/splits/val.csv
       - data/splits/test.csv
@@ -55,45 +78,38 @@ stages:
       - src/model/run_baselines.py
       - src/model/baseline.py
       - src/model/evaluate.py
+      - src/config.py
       - data/splits/train.csv
       - data/splits/val.csv
     outs:
       - data/baseline_results.csv
       - data/baseline_segments_all.csv
-    metrics:
-      - data/baseline_results.csv
+    params:
+      - evaluation.holiday_weight
 
   train:
     cmd: python src/model/train.py
     deps:
       - src/model/train.py
       - src/model/evaluate.py
+      - src/config.py
       - data/splits/train_features.csv
       - data/splits/val_features.csv
       - data/splits/test_features.csv
       - data/baseline_results.csv
       - params.yaml
     outs:
-      - models/best_model.json
-      - models/best_model.txt
-      - models/best_model.cbm
-      - models/best_model_meta.pkl
+      - models
       - data/model_comparison.csv
       - data/final_test_results.json
       - data/test_predictions.csv
       - data/test_predictions_all
-    metrics:
-      - data/model_comparison.csv
-      - data/final_test_results.json
     params:
-      - models.linear.alpha
-      - models.lightgbm.num_leaves
-      - models.lightgbm.learning_rate
-      - models.catboost.learning_rate
-      - models.catboost.depth
-      - models.xgboost.learning_rate
-      - models.xgboost.max_depth
-      - models.xgboost.subsample
+      - models.linear
+      - models.lightgbm
+      - models.catboost
+      - models.xgboost
+      - models.ensemble
       - evaluation.holiday_weight
 
   evaluate:
@@ -101,6 +117,7 @@ stages:
     deps:
       - src/model/evaluate_models.py
       - src/model/evaluate.py
+      - src/config.py
       - data/model_comparison.csv
       - data/final_test_results.json
       - data/splits/test_features.csv

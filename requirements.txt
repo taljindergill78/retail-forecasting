@@ -1,6 +1,7 @@
 # Core dependencies for data validation and ML pipeline
 psycopg2-binary>=2.9.0
 boto3>=1.28.0
+PyYAML>=6.0
 
 # Data manipulation and analysis
 pandas>=2.0.0

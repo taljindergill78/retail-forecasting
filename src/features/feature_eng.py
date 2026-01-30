@@ -8,9 +8,19 @@ This module creates features that help ML models beat baselines:
 - Store/dept features: already exist, we'll use them
 """
 
+import sys
+from pathlib import Path
+
+# Ensure project root is on path when run as python src/features/feature_eng.py (e.g. by DVC)
+_project_root = Path(__file__).resolve().parent.parent.parent
+if str(_project_root) not in sys.path:
+    sys.path.insert(0, str(_project_root))
+
 import pandas as pd
 import numpy as np
 from typing import List
+
+from src.config import load_params
 
 
 def add_time_features(df):
@@ -326,10 +336,10 @@ def handle_negative_sales(df, strategy='clip'):
     return df
 
 
-def build_features(train_df, val_df=None, test_df=None, negative_sales_strategy='clip'):
+def build_features(train_df, val_df=None, test_df=None, negative_sales_strategy='clip', lags=None, rolling_windows=None):
     """
     Build features for train/val/test splits with explicit feature groups.
-    
+
     Feature Groups:
     1. **Time features**: week_of_year, month, year, day_of_year
     2. **Target lags/rollings**: lag_1, lag_2, lag_4, lag_52, rolling_mean/std
@@ -337,19 +347,25 @@ def build_features(train_df, val_df=None, test_df=None, negative_sales_strategy=
     4. **Exogenous rollings/lags**: markdown_total, fuel_price, temperature lags/rollings
     5. **Static features**: store_type, store_size, dept_id (already in data)
     6. **Markdown features**: markdown_total, has_markdown
-    
+
     Important: For validation/test, we need to use training data
     to calculate lags (can't use future data).
-    
+
     Args:
         train_df: Training DataFrame
         val_df: Validation DataFrame (optional)
         test_df: Test DataFrame (optional)
         negative_sales_strategy: How to handle negative sales ('clip', 'keep', 'flag')
-        
+        lags: List of lag periods for target and exogenous (default [1, 2, 4, 52])
+        rolling_windows: List of rolling window sizes (default [4, 8])
+
     Returns:
         Tuple of (train_features, val_features, test_features)
     """
+    if lags is None:
+        lags = [1, 2, 4, 52]
+    if rolling_windows is None:
+        rolling_windows = [4, 8]
     print("🔧 Building features...")
     print("  Feature groups: time, target_lags, target_rollings, holiday_windows, exogenous, static, markdown")
     
@@ -379,8 +395,8 @@ def build_features(train_df, val_df=None, test_df=None, negative_sales_strategy=
     
     # Step 2: Lag features
     print("  ✅ Adding lag features...")
-    train_feat = add_lag_features(train_feat, lags=[1, 2, 4, 52])
-    
+    train_feat = add_lag_features(train_feat, lags=lags)
+
     # For validation: need to combine with train to get lags
     if val_df is not None:
         # Add marker to track train vs val before combining
@@ -389,7 +405,7 @@ def build_features(train_df, val_df=None, test_df=None, negative_sales_strategy=
         # Combine train + val, sort by date, calculate lags, then split
         combined = pd.concat([train_feat, val_feat], ignore_index=True)
         combined = combined.sort_values(['store_id', 'dept_id', 'week_date'])
-        combined = add_lag_features(combined, lags=[1, 2, 4, 52])
+        combined = add_lag_features(combined, lags=lags)
         # Split back using marker
         val_feat = combined[combined['_split_marker'] == 'val'].copy()
         train_feat = combined[combined['_split_marker'] == 'train'].copy()
@@ -410,7 +426,7 @@ def build_features(train_df, val_df=None, test_df=None, negative_sales_strategy=
         else:
             combined = pd.concat([train_feat, test_feat], ignore_index=True)
         combined = combined.sort_values(['store_id', 'dept_id', 'week_date'])
-        combined = add_lag_features(combined, lags=[1, 2, 4, 52])
+        combined = add_lag_features(combined, lags=lags)
         # Split back using markers
         test_feat = combined[combined['_split_marker'] == 'test'].copy()
         if val_df is not None:
@@ -421,18 +437,18 @@ def build_features(train_df, val_df=None, test_df=None, negative_sales_strategy=
         if val_df is not None:
             val_feat = val_feat.drop(columns=['_split_marker'])
         train_feat = train_feat.drop(columns=['_split_marker'])
-    
+
     # Step 3: Rolling features
     print("  ✅ Adding rolling features...")
-    train_feat = add_rolling_features(train_feat, windows=[4, 8])
-    
+    train_feat = add_rolling_features(train_feat, windows=rolling_windows)
+
     if val_df is not None:
         # Add markers to track splits
         train_feat['_split_marker'] = 'train'
         val_feat['_split_marker'] = 'val'
         combined = pd.concat([train_feat, val_feat], ignore_index=True)
         combined = combined.sort_values(['store_id', 'dept_id', 'week_date'])
-        combined = add_rolling_features(combined, windows=[4, 8])
+        combined = add_rolling_features(combined, windows=rolling_windows)
         # Split back using markers
         val_feat = combined[combined['_split_marker'] == 'val'].copy()
         train_feat = combined[combined['_split_marker'] == 'train'].copy()
@@ -452,7 +468,7 @@ def build_features(train_df, val_df=None, test_df=None, negative_sales_strategy=
         else:
             combined = pd.concat([train_feat, test_feat], ignore_index=True)
         combined = combined.sort_values(['store_id', 'dept_id', 'week_date'])
-        combined = add_rolling_features(combined, windows=[4, 8])
+        combined = add_rolling_features(combined, windows=rolling_windows)
         # Split back using markers
         test_feat = combined[combined['_split_marker'] == 'test'].copy()
         if val_df is not None:
@@ -463,7 +479,7 @@ def build_features(train_df, val_df=None, test_df=None, negative_sales_strategy=
         if val_df is not None:
             val_feat = val_feat.drop(columns=['_split_marker'])
         train_feat = train_feat.drop(columns=['_split_marker'])
-    
+
     # Step 4: Holiday window features (calendar-known, not leakage)
     print("  ✅ Adding holiday window features...")
     train_feat = add_holiday_window_features(train_feat)
@@ -474,14 +490,14 @@ def build_features(train_df, val_df=None, test_df=None, negative_sales_strategy=
     
     # Step 5: Exogenous lag features (markdown_total, fuel_price, temperature)
     print("  ✅ Adding exogenous lag features...")
-    train_feat = add_exogenous_lag_features(train_feat, lags=[1, 2, 4])
-    
+    train_feat = add_exogenous_lag_features(train_feat, lags=lags)
+
     if val_df is not None:
         train_feat['_split_marker'] = 'train'
         val_feat['_split_marker'] = 'val'
         combined = pd.concat([train_feat, val_feat], ignore_index=True)
         combined = combined.sort_values(['store_id', 'dept_id', 'week_date'])
-        combined = add_exogenous_lag_features(combined, lags=[1, 2, 4])
+        combined = add_exogenous_lag_features(combined, lags=lags)
         val_feat = combined[combined['_split_marker'] == 'val'].copy()
         train_feat = combined[combined['_split_marker'] == 'train'].copy()
         val_feat = val_feat.drop(columns=['_split_marker'])
@@ -497,7 +513,7 @@ def build_features(train_df, val_df=None, test_df=None, negative_sales_strategy=
         else:
             combined = pd.concat([train_feat, test_feat], ignore_index=True)
         combined = combined.sort_values(['store_id', 'dept_id', 'week_date'])
-        combined = add_exogenous_lag_features(combined, lags=[1, 2, 4])
+        combined = add_exogenous_lag_features(combined, lags=lags)
         test_feat = combined[combined['_split_marker'] == 'test'].copy()
         if val_df is not None:
             val_feat = combined[combined['_split_marker'] == 'val'].copy()
@@ -506,22 +522,22 @@ def build_features(train_df, val_df=None, test_df=None, negative_sales_strategy=
         if val_df is not None:
             val_feat = val_feat.drop(columns=['_split_marker'])
         train_feat = train_feat.drop(columns=['_split_marker'])
-    
+
     # Step 6: Exogenous rolling features
     print("  ✅ Adding exogenous rolling features...")
-    train_feat = add_exogenous_rolling_features(train_feat, windows=[4, 8])
-    
+    train_feat = add_exogenous_rolling_features(train_feat, windows=rolling_windows)
+
     if val_df is not None:
         train_feat['_split_marker'] = 'train'
         val_feat['_split_marker'] = 'val'
         combined = pd.concat([train_feat, val_feat], ignore_index=True)
         combined = combined.sort_values(['store_id', 'dept_id', 'week_date'])
-        combined = add_exogenous_rolling_features(combined, windows=[4, 8])
+        combined = add_exogenous_rolling_features(combined, windows=rolling_windows)
         val_feat = combined[combined['_split_marker'] == 'val'].copy()
         train_feat = combined[combined['_split_marker'] == 'train'].copy()
         val_feat = val_feat.drop(columns=['_split_marker'])
         train_feat = train_feat.drop(columns=['_split_marker'])
-    
+
     if test_df is not None:
         train_feat['_split_marker'] = 'train'
         if val_df is not None:
@@ -532,7 +548,7 @@ def build_features(train_df, val_df=None, test_df=None, negative_sales_strategy=
         else:
             combined = pd.concat([train_feat, test_feat], ignore_index=True)
         combined = combined.sort_values(['store_id', 'dept_id', 'week_date'])
-        combined = add_exogenous_rolling_features(combined, windows=[4, 8])
+        combined = add_exogenous_rolling_features(combined, windows=rolling_windows)
         test_feat = combined[combined['_split_marker'] == 'test'].copy()
         if val_df is not None:
             val_feat = combined[combined['_split_marker'] == 'val'].copy()
@@ -573,9 +589,16 @@ def main():
     print(f"  ✅ Training: {len(train_df):,} rows")
     print(f"  ✅ Validation: {len(val_df):,} rows")
     print(f"  ✅ Test: {len(test_df):,} rows")
-    
-    # Build features
-    train_feat, val_feat, test_feat = build_features(train_df, val_df, test_df)
+
+    # Build features (config from params.yaml)
+    params = load_params()
+    feat_params = params.get("features", {})
+    train_feat, val_feat, test_feat = build_features(
+        train_df, val_df, test_df,
+        negative_sales_strategy=feat_params.get("negative_sales_strategy", "clip"),
+        lags=feat_params.get("lags", [1, 2, 4, 52]),
+        rolling_windows=feat_params.get("rolling_windows", [4, 8]),
+    )
     
     # Save feature-engineered datasets
     print("\n💾 Saving feature-engineered datasets...")

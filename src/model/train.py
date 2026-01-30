@@ -554,10 +554,13 @@ def select_best_model(results, baseline_rmse, baseline_wmae):
 
 def main():
     """Main training function."""
+    # Create output dir so DVC finds it after clearing outputs before re-run
+    os.makedirs("models", exist_ok=True)
+
     print("=" * 60)
     print("🤖 Model Training & Comparison")
     print("=" * 60)
-    
+
     # Load feature-engineered data
     print("\n📥 Loading feature-engineered data...")
     train_df = pd.read_csv('data/splits/train_features.csv')

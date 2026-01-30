@@ -20,6 +20,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from src.config import load_params
 from src.model.evaluate import evaluate_predictions_with_wmae, evaluate_by_segments
 
 # Set style
@@ -334,10 +335,15 @@ def create_evaluation_report(results, output_file='reports/model_evaluation_repo
 
 def main():
     """Main evaluation function."""
+    params = load_params()
+    eval_params = params.get("evaluation", {})
+    holiday_weight = eval_params.get("holiday_weight", 5.0)
+    n_plot_samples = eval_params.get("n_plot_samples", 5)
+
     print("=" * 60)
     print("📊 Model Evaluation & Visualization (All Models)")
     print("=" * 60)
-    
+
     # Load data
     print("\n📥 Loading data...")
     try:
@@ -451,7 +457,7 @@ def main():
         metrics = evaluate_predictions_with_wmae(
             test_df[['store_id', 'dept_id', 'week_date', 'weekly_sales', 'isholiday']],
             pred_df,
-            holiday_weight=5.0
+            holiday_weight=holiday_weight
         )
         all_metrics[model_name] = metrics
         results[model_name] = {'metrics': metrics, 'predictions': pred_df}
@@ -465,7 +471,7 @@ def main():
     plot_model_comparison(
         test_df[['store_id', 'dept_id', 'week_date', 'weekly_sales']],
         all_predictions,
-        n_samples=3
+        n_samples=min(3, n_plot_samples)
     )
     
     # 2. Metrics comparison
@@ -487,7 +493,7 @@ def main():
         test_df[['store_id', 'dept_id', 'week_date', 'weekly_sales']],
         best_pred_df,
         best_model_name,
-        n_samples=5
+        n_samples=n_plot_samples
     )
     
     plot_residuals_over_time(
@@ -538,7 +544,7 @@ def main():
         test_df[['store_id', 'dept_id', 'week_date', 'weekly_sales', 'isholiday']],
         best_pred_df,
         segment_col='isholiday',
-        holiday_weight=5.0
+        holiday_weight=holiday_weight
     )
     
     print("\n" + "=" * 60)

@@ -25,6 +25,7 @@ from src.model.baseline import (
     seasonal_average_forecast,
     hybrid_fallback_forecast
 )
+from src.config import load_params
 from src.model.evaluate import evaluate_predictions_with_wmae, evaluate_by_segments
 
 
@@ -58,10 +59,13 @@ def create_segments(val_df):
 
 
 def main():
+    params = load_params()
+    holiday_weight = params.get("evaluation", {}).get("holiday_weight", 5.0)
+
     print("=" * 60)
     print("📊 Baseline Model Evaluation (Enhanced)")
     print("=" * 60)
-    
+
     # Step 1: Load data
     print("\n📥 Loading data...")
     train_df = pd.read_csv('data/splits/train.csv')
@@ -99,7 +103,7 @@ def main():
             pred = baseline_func(train_df, forecast_dates)
             
             # Overall metrics with WMAE
-            metrics = evaluate_predictions_with_wmae(val_df, pred, holiday_weight=5.0)
+            metrics = evaluate_predictions_with_wmae(val_df, pred, holiday_weight=holiday_weight)
             results[baseline_name] = metrics
             
             print(f"  RMSE: ${metrics['rmse']:,.2f}")
@@ -111,7 +115,7 @@ def main():
             # Segmented evaluation
             segments = {}
             for segment_col in ['store_type', 'isholiday', 'volume_quartile', 'is_top_dept']:
-                seg_df = evaluate_by_segments(val_df, pred, segment_col, holiday_weight=5.0)
+                seg_df = evaluate_by_segments(val_df, pred, segment_col, holiday_weight=holiday_weight)
                 segments[segment_col] = seg_df
                 seg_df.to_csv(f'data/baseline_segments_{baseline_name.replace(" ", "_")}_{segment_col}.csv', index=False)
             

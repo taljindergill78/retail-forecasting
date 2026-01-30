@@ -3,6 +3,12 @@
 # This file contains all configurable parameters for the ML pipeline.
 # Modify these values and run `dvc repro` to rerun affected stages.
 
+# Source data manifests (S3 URIs hashed to fingerprint raw data; used to invalidate pipeline when source changes)
+manifests:
+  train_s3_uri: 's3://retail-ml-taljinder-2025/raw/walmart/train/train.csv'      # e.g. s3://retail-ml-taljinder-2025/raw/train.csv
+  features_s3_uri: 's3://retail-ml-taljinder-2025/raw/walmart/features/features.csv'   # e.g. s3://retail-ml-taljinder-2025/raw/features.csv
+  stores_s3_uri: 's3://retail-ml-taljinder-2025/raw/walmart/stores/stores.csv'     # e.g. s3://retail-ml-taljinder-2025/raw/stores.csv
+
 # Data splitting parameters
 split:
   train_end_date: '2011-12-31'  # Last day of training set
@@ -14,34 +20,54 @@ features:
   lags: [1, 2, 4, 52]              # Lag periods for target variable
   rolling_windows: [4, 8]          # Rolling window sizes
 
-# Model hyperparameters
+# Model hyperparameters (grids = what to try; script selects best on validation)
 models:
   linear:
-    alpha: 1.0  # Ridge regularization strength
-  
+    alphas: [0.1, 0.5, 1.0, 5.0, 10.0, 50.0, 100.0]  # RidgeCV tries these
+
   lightgbm:
-    num_leaves: 31
-    learning_rate: 0.05
-    feature_fraction: 0.9
-    bagging_fraction: 0.8
-    bagging_freq: 5
+    param_grid:
+      - num_leaves: 31
+        learning_rate: 0.05
+        feature_fraction: 0.9
+        bagging_fraction: 0.8
+      - num_leaves: 50
+        learning_rate: 0.03
+        feature_fraction: 0.8
+        bagging_fraction: 0.7
+      - num_leaves: 20
+        learning_rate: 0.1
+        feature_fraction: 0.95
+        bagging_fraction: 0.85
     num_boost_round: 1000
     early_stopping_rounds: 50
-  
+    bagging_freq: 5
+
   catboost:
-    learning_rate: 0.05
-    depth: 6
+    param_grid:
+      - learning_rate: 0.05
+        depth: 6
+      - learning_rate: 0.03
+        depth: 8
+      - learning_rate: 0.1
+        depth: 4
     iterations: 1000
     early_stopping_rounds: 50
 
   xgboost:
-    learning_rate: 0.05
-    max_depth: 6
-    subsample: 0.8
+    param_grid:
+      - learning_rate: 0.05
+        max_depth: 6
+        subsample: 0.8
+      - learning_rate: 0.03
+        max_depth: 8
+        subsample: 0.7
+      - learning_rate: 0.1
+        max_depth: 4
+        subsample: 0.9
     n_estimators: 1000
     early_stopping_rounds: 50
 
-  # Ensemble (used when best model is an ensemble)
   ensemble:
     method: weighted  # 'simple' or 'weighted'
 

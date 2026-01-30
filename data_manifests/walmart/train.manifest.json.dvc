@@ -1,5 +1,0 @@
-outs:
-- md5: 74648c0ff934ea46917f67d295a31a97
-  size: 215
-  hash: md5
-  path: train.manifest.json

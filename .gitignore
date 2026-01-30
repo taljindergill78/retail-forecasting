@@ -41,12 +41,8 @@ infra/lambdas/*/*.zip
 # Jupyter notebooks (testing/experimental)
 src/model/testing.ipynb
 
-# Model artifacts (tracked by DVC)
-models/*.pkl
-models/*.txt
-models/*.cbm
-models/*.json
-!models/.gitkeep
+# Model artifacts (tracked by DVC pipeline output; do not track in Git)
+models/
 
 # CatBoost training artifacts (auto-generated, not needed)
 catboost_info/
@@ -54,6 +50,8 @@ catboost_info/
 # Reports (generated files - ignore all generated content)
 reports/figures/
 reports/tables/
+reports/eda/
 reports/*.md
 reports/*.csv
 !reports/.gitkeep
+/models
