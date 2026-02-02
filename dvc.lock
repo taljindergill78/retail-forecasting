@@ -230,8 +230,8 @@ stages:
       size: 10473
     - path: src/model/train.py
       hash: md5
-      md5: 341773145229cdfae696a08efc35bad2
-      size: 38045
+      md5: d05cc3c7d248b5e34670a0e8e9ce834a
+      size: 40704
     params:
       params.yaml:
         evaluation.holiday_weight: 5.0
@@ -291,6 +291,10 @@ stages:
       hash: md5
       md5: e72067191da15c4bb2267b6385d9b303
       size: 231
+    - path: data/mlflow_run_id.txt
+      hash: md5
+      md5: 1dc458bd88750842771d1d36ce952e70
+      size: 32
     - path: data/model_comparison.csv
       hash: md5
       md5: d60ded276ef55faffe9087d42f4b9edb
@@ -316,6 +320,10 @@ stages:
       hash: md5
       md5: e72067191da15c4bb2267b6385d9b303
       size: 231
+    - path: data/mlflow_run_id.txt
+      hash: md5
+      md5: 1dc458bd88750842771d1d36ce952e70
+      size: 32
     - path: data/model_comparison.csv
       hash: md5
       md5: d60ded276ef55faffe9087d42f4b9edb
@@ -339,8 +347,8 @@ stages:
       size: 10473
     - path: src/model/evaluate_models.py
       hash: md5
-      md5: bc4916aa3650a761bd29b81e2e1adfd7
-      size: 21702
+      md5: ca8a14669efe5cf2ca986ced8b41f651
+      size: 22916
     params:
       params.yaml:
         evaluation.holiday_weight: 5.0
