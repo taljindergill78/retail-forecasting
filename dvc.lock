@@ -230,8 +230,8 @@ stages:
       size: 10473
     - path: src/model/train.py
       hash: md5
-      md5: 8d3893375985548f34c4d7d48a851ff4
-      size: 37596
+      md5: 341773145229cdfae696a08efc35bad2
+      size: 38045
     params:
       params.yaml:
         evaluation.holiday_weight: 5.0
