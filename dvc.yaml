@@ -104,6 +104,7 @@ stages:
       - data/final_test_results.json
       - data/test_predictions.csv
       - data/test_predictions_all
+      - data/mlflow_run_id.txt
     params:
       - models.linear
       - models.lightgbm
@@ -122,6 +123,7 @@ stages:
       - data/final_test_results.json
       - data/splits/test_features.csv
       - data/test_predictions_all
+      - data/mlflow_run_id.txt
     outs:
       - reports/model_evaluation_report.csv
       - reports/figures

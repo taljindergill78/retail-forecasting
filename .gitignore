@@ -7,10 +7,15 @@ __pycache__/
 .dvc/tmp/
 .dvc/cache/
 
+# MLflow (file store: runs + registry under mlruns/; we use remote when we move to SageMaker)
+mlruns/
+data/mlflow_run_id.txt
+
 # OS/editor
 .DS_Store
 
 # Documentation files (personal notes, not for GitHub)
+docs/
 Guideliness.txt
 current_progress.txt
 reports/*.md
@@ -40,6 +45,7 @@ infra/lambdas/*/*.zip
 
 # Jupyter notebooks (testing/experimental)
 src/model/testing.ipynb
+src/model/test_mlflow_load.py
 
 # Model artifacts (tracked by DVC pipeline output; do not track in Git)
 models/

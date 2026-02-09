@@ -8,6 +8,8 @@ This script:
 4. Selects best model based on RMSE+WMAE rule
 5. Retrains best model on train+val, evaluates on test
 6. Saves models and results
+
+FIXED: MLflow setup to use SQLite backend and proper artifact logging
 """
 
 import sys
@@ -29,6 +31,9 @@ from sklearn.model_selection import TimeSeriesSplit
 import lightgbm as lgb
 import catboost as cb
 import xgboost as xgb
+
+import mlflow
+import mlflow.pyfunc
 
 from src.model.evaluate import evaluate_predictions_with_wmae, evaluate_by_segments
 
@@ -556,7 +561,50 @@ def main():
     """Main training function."""
     # Create output dir so DVC finds it after clearing outputs before re-run
     os.makedirs("models", exist_ok=True)
+    os.makedirs("data", exist_ok=True)  # Ensure data directory exists
 
+    # FIXED: Use SQLite backend (recommended by MLflow)
+    # This will create mlflow.db file in your project root
+    tracking_uri = f"sqlite:///{os.path.abspath('mlflow.db')}"
+    mlflow.set_tracking_uri(tracking_uri)
+    print(f"📊 MLflow tracking URI: {tracking_uri}")
+    
+    # Create or get experiment
+    client = mlflow.MlflowClient()
+    experiment_name = "Retail_Forecasting_Models"
+    
+    try:
+        experiment = client.get_experiment_by_name(experiment_name)
+        if experiment is None:
+            experiment_id = client.create_experiment(experiment_name)
+            print(f"✅ Created new experiment: {experiment_name} (ID: {experiment_id})")
+        else:
+            print(f"✅ Using existing experiment: {experiment_name} (ID: {experiment.experiment_id})")
+    except Exception as e:
+        print(f"⚠️  Warning: Could not get/create experiment: {e}")
+        # Try to create it anyway
+        try:
+            experiment_id = client.create_experiment(experiment_name)
+            print(f"✅ Created new experiment: {experiment_name} (ID: {experiment_id})")
+        except:
+            print("⚠️  Using default experiment")
+    
+    mlflow.set_experiment(experiment_name)
+
+    # One MLflow run per training execution: all params/metrics/artifacts will attach to this run
+    with mlflow.start_run() as run:
+        print(f"🚀 Started MLflow run: {run.info.run_id}")
+        try:
+            _run_training()
+        except Exception as e:
+            print(f"\n❌ Error during training: {e}")
+            import traceback
+            traceback.print_exc()
+            raise
+
+
+def _run_training():
+    """Core training logic; runs inside an active MLflow run."""
     print("=" * 60)
     print("🤖 Model Training & Comparison")
     print("=" * 60)
@@ -574,7 +622,12 @@ def main():
     print(f"  ✅ Train: {len(train_df):,} rows")
     print(f"  ✅ Validation: {len(val_df):,} rows")
     print(f"  ✅ Test: {len(test_df):,} rows")
-    
+
+    # MLflow: log run context (params)
+    mlflow.log_param("n_train", len(train_df))
+    mlflow.log_param("n_val", len(val_df))
+    mlflow.log_param("n_test", len(test_df))
+
     # Load baseline results for comparison
     print("\n📊 Loading baseline results...")
     baseline_results = pd.read_csv('data/baseline_results.csv', index_col=0)
@@ -588,7 +641,10 @@ def main():
     )
     print(f"  ✅ Features: {len(feature_cols)}")
     print(f"  ✅ Categorical features: {len(cat_indices)}")
-    
+    # n_features = columns used as inputs; we exclude target (weekly_sales) and week_date, so 52 - 2 = 50
+    mlflow.log_param("n_features", len(feature_cols))
+    mlflow.log_param("excluded_from_features", "weekly_sales,week_date")
+
     # Train models
     print("\n" + "=" * 60)
     print("🚀 Training Models")
@@ -693,7 +749,25 @@ def main():
     
     # Select best model
     best_model_name = select_best_model(results, seasonal_naive_rmse, seasonal_naive_wmae)
-    
+
+    # MLflow: log each model's validation metrics and best model
+    def _metric_key(name):
+        # MLflow metric names: alphanumerics, _, -, ., space, :, / only (no + or parens)
+        return (
+            name.replace(" ", "_")
+            .replace("(", "")
+            .replace(")", "")
+            .replace("/", "_")
+            .replace("+", "_")
+        )
+    for name, result in results.items():
+        key = _metric_key(name)
+        mlflow.log_metric(f"val_rmse_{key}", round(result["metrics"]["rmse"], 4))
+        mlflow.log_metric(f"val_wmae_{key}", round(result["metrics"]["wmae"], 4))
+    mlflow.log_param("best_model", best_model_name)
+    mlflow.log_metric("best_val_rmse", round(results[best_model_name]["metrics"]["rmse"], 4))
+    mlflow.log_metric("best_val_wmae", round(results[best_model_name]["metrics"]["wmae"], 4))
+
     # Retrain all models on train+val, evaluate on test
     print("\n" + "=" * 60)
     print("🔄 Retraining All Models on Train+Val")
@@ -743,8 +817,9 @@ def main():
                 final_model = lgb.train(params, train_data, num_boost_round=model_result['model'].best_iteration)
                 y_test_pred = final_model.predict(X_test_final)
                 
-                # Only save if this is the best model
+                # Only save and log if this is the best model
                 if model_name == best_model_name:
+                    # Save to models/ directory (for backward compatibility)
                     final_model.save_model('models/best_model.txt')
                     with open('models/best_model_meta.pkl', 'wb') as f:
                         pickle.dump({
@@ -752,6 +827,33 @@ def main():
                             'categorical_features': categorical_features,
                             'best_params': best_params
                         }, f)
+                    
+                    print(f"  📦 Logging best model ({model_name}) to MLflow...")
+                    try:
+                        # FIXED: Proper artifact logging
+                        # Log model files as artifacts
+                        mlflow.log_artifact('models/best_model.txt', artifact_path="model")
+                        mlflow.log_artifact('models/best_model_meta.pkl', artifact_path="model")
+                        
+                        # Also use the standard log_model for Model Registry
+                        signature = mlflow.models.infer_signature(X_train_val, y_train_val)
+                        input_example = X_train_val.head(3)
+                        
+                        mlflow.lightgbm.log_model(
+                            final_model, 
+                            artifact_path="model_registry",  # Separate path for registry
+                            signature=signature, 
+                            input_example=input_example,
+                            registered_model_name="RetailSalesForecaster"
+                        )
+                        
+                        print(f"    ✅ Model logged to artifacts: model/")
+                        print(f"    ✅ Model registered as: RetailSalesForecaster")
+                        
+                    except Exception as e:
+                        print(f"    ⚠️  Warning: mlflow logging issue: {e}")
+                        import traceback
+                        traceback.print_exc()
             
             elif model_type == 'catboost':
                 best_params = model_result.get('best_params', {'learning_rate': 0.05, 'depth': 6})
@@ -762,13 +864,13 @@ def main():
                     random_seed=42,
                     cat_features=cat_indices,
                     verbose=False,
-                    allow_writing_files=False,  # Prevent catboost_info folder creation
+                    allow_writing_files=False,
                     **best_params
                 )
                 final_model.fit(X_train_val, y_train_val, verbose=False)
                 y_test_pred = final_model.predict(X_test_final)
                 
-                # Only save if this is the best model
+                # Only save and log if this is the best model
                 if model_name == best_model_name:
                     final_model.save_model('models/best_model.cbm')
                     with open('models/best_model_meta.pkl', 'wb') as f:
@@ -776,6 +878,32 @@ def main():
                             'model_type': 'catboost',
                             'best_params': best_params
                         }, f)
+                    
+                    print(f"  📦 Logging best model ({model_name}) to MLflow...")
+                    try:
+                        # Save model files as artifacts
+                        mlflow.log_artifact('models/best_model.cbm', artifact_path="model")
+                        mlflow.log_artifact('models/best_model_meta.pkl', artifact_path="model")
+                        
+                        # Also log to registry
+                        signature = mlflow.models.infer_signature(X_train_val, y_train_val)
+                        input_example = X_train_val.head(3)
+                        
+                        mlflow.catboost.log_model(
+                            final_model, 
+                            artifact_path="model_registry",
+                            signature=signature, 
+                            input_example=input_example,
+                            registered_model_name="RetailSalesForecaster"
+                        )
+                        
+                        print(f"    ✅ Model logged to artifacts: model/")
+                        print(f"    ✅ Model registered as: RetailSalesForecaster")
+                        
+                    except Exception as e:
+                        print(f"    ⚠️  Warning: mlflow logging issue: {e}")
+                        import traceback
+                        traceback.print_exc()
             
             elif model_type == 'xgboost':
                 best_params = model_result.get('best_params', {'learning_rate': 0.05, 'max_depth': 6, 'subsample': 0.8})
@@ -798,7 +926,7 @@ def main():
                 final_model.fit(X_train_val_xgb, y_train_val, verbose=False)
                 y_test_pred = final_model.predict(X_test_xgb)
                 
-                # Only save if this is the best model
+                # Only save and log if this is the best model
                 if model_name == best_model_name:
                     final_model.save_model('models/best_model.json')
                     with open('models/best_model_meta.pkl', 'wb') as f:
@@ -806,6 +934,30 @@ def main():
                             'model_type': 'xgboost',
                             'best_params': best_params
                         }, f)
+                    
+                    print(f"  📦 Logging best model ({model_name}) to MLflow...")
+                    try:
+                        # Save model files as artifacts
+                        mlflow.log_artifact('models/best_model.json', artifact_path="model")
+                        mlflow.log_artifact('models/best_model_meta.pkl', artifact_path="model")
+                        
+                        # Also log to registry
+                        signature = mlflow.models.infer_signature(X_train_val_xgb, y_train_val)
+                        
+                        mlflow.xgboost.log_model(
+                            final_model, 
+                            artifact_path="model_registry",
+                            signature=signature,
+                            registered_model_name="RetailSalesForecaster"
+                        )
+                        
+                        print(f"    ✅ Model logged to artifacts: model/")
+                        print(f"    ✅ Model registered as: RetailSalesForecaster")
+                        
+                    except Exception as e:
+                        print(f"    ⚠️  Warning: mlflow logging issue: {e}")
+                        import traceback
+                        traceback.print_exc()
             
             # Save test predictions for this model
             test_pred_df = test_df[['store_id', 'dept_id', 'week_date']].copy()
@@ -858,7 +1010,7 @@ def main():
                     iterations=comp_result['model'].get_best_iteration(),
                     loss_function='RMSE', random_seed=42,
                     cat_features=cat_indices, verbose=False,
-                    allow_writing_files=False,  # Prevent catboost_info folder creation
+                    allow_writing_files=False,
                     **best_params
                 )
                 comp_model.fit(X_train_val, y_train_val, verbose=False)
@@ -907,6 +1059,9 @@ def main():
                 'component_models': component_models,
                 'weights': weights
             }, f)
+        
+        # Log ensemble metadata
+        mlflow.log_artifact('models/best_model_meta.pkl', artifact_path="model")
     
     # Save all test predictions to folder
     print("\n💾 Saving all test predictions...")
@@ -918,7 +1073,6 @@ def main():
         print(f"  ✅ Saved: {filename}")
     
     # Save metadata
-    import json
     metadata = {
         'models': list(all_test_predictions.keys()),
         'n_samples': len(test_df)
@@ -945,7 +1099,13 @@ def main():
     print(f"  WMAE: ${test_metrics['wmae']:,.2f}")
     print(f"  MAPE: {test_metrics['mape']:.2f}%")
     print(f"  R²: {test_metrics['r_squared']:.4f}")
-    
+
+    # MLflow: log best model test metrics
+    mlflow.log_metric("test_rmse", round(test_metrics["rmse"], 4))
+    mlflow.log_metric("test_wmae", round(test_metrics["wmae"], 4))
+    mlflow.log_metric("test_mae", round(test_metrics["mae"], 4))
+    mlflow.log_metric("test_r2", round(test_metrics["r_squared"], 4))
+
     # Save results
     print("\n💾 Saving results...")
     
@@ -968,7 +1128,20 @@ def main():
     with open('data/final_test_results.json', 'w') as f:
         json.dump(test_results, f, indent=2)
     print(f"  ✅ Saved: data/final_test_results.json")
-    
+
+    # MLflow: log artifacts for this run
+    if os.path.isfile("data/model_comparison.csv"):
+        mlflow.log_artifact("data/model_comparison.csv", artifact_path="results")
+    if os.path.isfile("data/final_test_results.json"):
+        mlflow.log_artifact("data/final_test_results.json", artifact_path="results")
+
+    # Write run_id so evaluate_models.py can attach evaluation artifacts to this run
+    run = mlflow.active_run()
+    if run:
+        with open("data/mlflow_run_id.txt", "w") as f:
+            f.write(run.info.run_id)
+        print(f"  ✅ Saved MLflow run ID: {run.info.run_id}")
+
     print("\n" + "=" * 60)
     print("✅ Training complete!")
     print("=" * 60)
