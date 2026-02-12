@@ -16,9 +16,9 @@ job.init(args["JOB_NAME"], args)
 # -----------------------------
 # 1) Inputs in S3
 # -----------------------------
-S3_STORES = "s3://retail-ml-taljinder-2025/raw/walmart/stores/stores.csv"
-S3_FEATURES = "s3://retail-ml-taljinder-2025/raw/walmart/features/features.csv"
-S3_TRAIN = "s3://retail-ml-taljinder-2025/raw/walmart/train/train.csv"
+S3_STORES = "s3://retail-ml-taljinder-2025-new/raw/walmart/stores/stores.csv"
+S3_FEATURES = "s3://retail-ml-taljinder-2025-new/raw/walmart/features/features.csv"
+S3_TRAIN = "s3://retail-ml-taljinder-2025-new/raw/walmart/train/train.csv"
 
 # -----------------------------
 # 2) Targets in Postgres

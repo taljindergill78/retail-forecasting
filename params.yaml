@@ -5,9 +5,9 @@
 
 # Source data manifests (S3 URIs hashed to fingerprint raw data; used to invalidate pipeline when source changes)
 manifests:
-  train_s3_uri: 's3://retail-ml-taljinder-2025/raw/walmart/train/train.csv'      # e.g. s3://retail-ml-taljinder-2025/raw/train.csv
-  features_s3_uri: 's3://retail-ml-taljinder-2025/raw/walmart/features/features.csv'   # e.g. s3://retail-ml-taljinder-2025/raw/features.csv
-  stores_s3_uri: 's3://retail-ml-taljinder-2025/raw/walmart/stores/stores.csv'     # e.g. s3://retail-ml-taljinder-2025/raw/stores.csv
+  train_s3_uri: 's3://retail-ml-taljinder-2025-new/raw/walmart/train/train.csv'      # e.g. s3://retail-ml-taljinder-2025/raw/train.csv
+  features_s3_uri: 's3://retail-ml-taljinder-2025-new/raw/walmart/features/features.csv'   # e.g. s3://retail-ml-taljinder-2025/raw/features.csv
+  stores_s3_uri: 's3://retail-ml-taljinder-2025-new/raw/walmart/stores/stores.csv'     # e.g. s3://retail-ml-taljinder-2025/raw/stores.csv
 
 # Data splitting parameters
 split:
