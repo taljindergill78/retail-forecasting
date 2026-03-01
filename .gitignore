@@ -42,6 +42,12 @@ infra/lambdas/*/*.zip
 .env.local
 .env.*.local
 *.env
+infra/sagemaker_config.env
+infra/sagemaker_config.env.example
+
+# SSH keys (NEVER commit private keys!)
+*.pem
+mlflow-tracking-ec2-key.pem
 
 # Jupyter notebooks (testing/experimental)
 src/model/testing.ipynb

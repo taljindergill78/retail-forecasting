@@ -21,12 +21,14 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+from src.config import get_splits_dir, get_reports_dir
+
 # Set style for better-looking plots
 plt.style.use('seaborn-v0_8-darkgrid')
 sns.set_palette("husl")
 
-# Create output directories (eda/ subdir so DVC pipeline doesn't conflict with evaluate stage)
-REPORTS_DIR = project_root / "reports"
+# Create output directories (overridable via REPORTS_DIR on SageMaker)
+REPORTS_DIR = get_reports_dir()
 FIGURES_DIR = REPORTS_DIR / "eda" / "figures"
 TABLES_DIR = REPORTS_DIR / "eda" / "tables"
 
@@ -35,10 +37,10 @@ TABLES_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def load_data():
-    """Load train, validation, and test splits."""
+    """Load train, validation, and test splits (path overridable via SPLITS_DIR on SageMaker)."""
     print("📥 Loading data splits...")
     
-    data_dir = project_root / "data" / "splits"
+    data_dir = get_splits_dir()
     
     train_df = pd.read_csv(data_dir / "train.csv")
     val_df = pd.read_csv(data_dir / "val.csv")

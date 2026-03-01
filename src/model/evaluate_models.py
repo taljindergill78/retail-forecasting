@@ -17,11 +17,11 @@ sys.path.insert(0, str(project_root))
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from src.config import load_params
+from src.config import load_params, get_data_dir, get_splits_dir, get_reports_dir, get_mlflow_tracking_uri
 from src.model.evaluate import evaluate_predictions_with_wmae, evaluate_by_segments
 
-REPORTS_DIR = project_root / "reports"
-FIGURES_DIR = project_root / "reports" / "figures"
+REPORTS_DIR = get_reports_dir()
+FIGURES_DIR = REPORTS_DIR / "figures"
 
 
 def create_evaluation_report(all_metrics, comparison_path, report_path):
@@ -67,8 +67,9 @@ def main():
     n_plot_samples = eval_params.get("n_plot_samples", 5)
 
     # If train.py wrote a run_id, we'll attach evaluation artifacts to that MLflow run
+    data_dir = get_data_dir()
     mlflow_run_id = None
-    run_id_file = project_root / "data" / "mlflow_run_id.txt"
+    run_id_file = data_dir / "mlflow_run_id.txt"
     if run_id_file.exists():
         try:
             mlflow_run_id = run_id_file.read_text().strip()
@@ -79,10 +80,11 @@ def main():
     print("📊 Model Evaluation & Visualization (All Models)")
     print("=" * 60)
 
-    # Load data
+    # Load data (paths overridable via SPLITS_DIR, DATA_DIR on SageMaker)
+    splits_dir = get_splits_dir()
     print("\n📥 Loading data...")
     try:
-        test_df = pd.read_csv(project_root / "data" / "splits" / "test_features.csv")
+        test_df = pd.read_csv(splits_dir / "test_features.csv")
         test_df["week_date"] = pd.to_datetime(test_df["week_date"])
         print(f"  Test data: {len(test_df):,} rows")
     except FileNotFoundError as e:
@@ -96,13 +98,13 @@ def main():
     actual_df = test_df[actual_cols].copy()
 
     # Load train outputs
-    comparison_path = project_root / "data" / "model_comparison.csv"
-    with open(project_root / "data" / "final_test_results.json") as f:
+    comparison_path = data_dir / "model_comparison.csv"
+    with open(data_dir / "final_test_results.json") as f:
         final_results = json.load(f)
     best_model_name = final_results.get("model", "")
 
     # Load all test predictions from data/test_predictions_all
-    pred_dir = project_root / "data" / "test_predictions_all"
+    pred_dir = data_dir / "test_predictions_all"
     if not pred_dir.exists():
         print("  ERROR: data/test_predictions_all not found. Run train stage first.")
         sys.exit(1)
@@ -136,7 +138,7 @@ def main():
 
     # Create report
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
-    report_path = project_root / "reports" / "model_evaluation_report.csv"
+    report_path = REPORTS_DIR / "model_evaluation_report.csv"
     print("\n📝 Creating evaluation report...")
     create_evaluation_report(all_metrics, comparison_path, report_path)
 
@@ -179,11 +181,11 @@ def main():
         plt.close()
 
     # Attach evaluation artifacts to the same MLflow run as train.
-    # Use same tracking URI (SQLite mlflow.db) and experiment as train.py so we can resume the run.
+    # Use same tracking URI as train (env MLFLOW_TRACKING_URI on SageMaker, else local SQLite).
     if mlflow_run_id:
         try:
             import mlflow
-            tracking_uri = f"sqlite:///{project_root / 'mlflow.db'}"
+            tracking_uri = get_mlflow_tracking_uri()
             mlflow.set_tracking_uri(tracking_uri)
             mlflow.set_experiment("Retail_Forecasting_Models")
             mlflow.start_run(run_id=mlflow_run_id)

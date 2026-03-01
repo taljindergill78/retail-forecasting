@@ -1,0 +1,16 @@
+# Exclude from Docker build context (see docs/PHASE_B_STEP_5_PACKAGE_CODE_DOCKER_ECR_GUIDE.md Appendix D.4, D.5)
+.git
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+data/
+reports/
+models/
+*.pem
+.env
+infra/sagemaker_config.env
+dvc.lock
+.dvc/

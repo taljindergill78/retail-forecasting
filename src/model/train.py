@@ -36,6 +36,7 @@ import mlflow
 import mlflow.pyfunc
 
 from src.model.evaluate import evaluate_predictions_with_wmae, evaluate_by_segments
+from src.config import get_splits_dir, get_data_dir, get_models_dir, get_mlflow_tracking_uri
 
 
 # Define feature groups for easier management
@@ -559,13 +560,13 @@ def select_best_model(results, baseline_rmse, baseline_wmae):
 
 def main():
     """Main training function."""
-    # Create output dir so DVC finds it after clearing outputs before re-run
-    os.makedirs("models", exist_ok=True)
-    os.makedirs("data", exist_ok=True)  # Ensure data directory exists
+    models_dir = get_models_dir()
+    data_dir = get_data_dir()
+    os.makedirs(models_dir, exist_ok=True)
+    os.makedirs(data_dir, exist_ok=True)
 
-    # FIXED: Use SQLite backend (recommended by MLflow)
-    # This will create mlflow.db file in your project root
-    tracking_uri = f"sqlite:///{os.path.abspath('mlflow.db')}"
+    # Use MLFLOW_TRACKING_URI if set (SageMaker → EC2 MLflow); else local SQLite
+    tracking_uri = get_mlflow_tracking_uri()
     mlflow.set_tracking_uri(tracking_uri)
     print(f"📊 MLflow tracking URI: {tracking_uri}")
     
@@ -609,11 +610,14 @@ def _run_training():
     print("🤖 Model Training & Comparison")
     print("=" * 60)
 
-    # Load feature-engineered data
+    # Load feature-engineered data (paths overridable via SPLITS_DIR, DATA_DIR, MODELS_DIR on SageMaker)
+    splits_dir = get_splits_dir()
+    data_dir = get_data_dir()
+    models_dir = get_models_dir()
     print("\n📥 Loading feature-engineered data...")
-    train_df = pd.read_csv('data/splits/train_features.csv')
-    val_df = pd.read_csv('data/splits/val_features.csv')
-    test_df = pd.read_csv('data/splits/test_features.csv')
+    train_df = pd.read_csv(splits_dir / 'train_features.csv')
+    val_df = pd.read_csv(splits_dir / 'val_features.csv')
+    test_df = pd.read_csv(splits_dir / 'test_features.csv')
     
     # Convert dates
     for df in [train_df, val_df, test_df]:
@@ -630,7 +634,7 @@ def _run_training():
 
     # Load baseline results for comparison
     print("\n📊 Loading baseline results...")
-    baseline_results = pd.read_csv('data/baseline_results.csv', index_col=0)
+    baseline_results = pd.read_csv(data_dir / 'baseline_results.csv', index_col=0)
     seasonal_naive_rmse = baseline_results.loc['Seasonal Naive', 'rmse']
     seasonal_naive_wmae = baseline_results.loc['Seasonal Naive', 'wmae']
     
@@ -820,8 +824,8 @@ def _run_training():
                 # Only save and log if this is the best model
                 if model_name == best_model_name:
                     # Save to models/ directory (for backward compatibility)
-                    final_model.save_model('models/best_model.txt')
-                    with open('models/best_model_meta.pkl', 'wb') as f:
+                    final_model.save_model(str(models_dir / 'best_model.txt'))
+                    with open(models_dir / 'best_model_meta.pkl', 'wb') as f:
                         pickle.dump({
                             'model_type': 'lightgbm', 
                             'categorical_features': categorical_features,
@@ -832,8 +836,8 @@ def _run_training():
                     try:
                         # FIXED: Proper artifact logging
                         # Log model files as artifacts
-                        mlflow.log_artifact('models/best_model.txt', artifact_path="model")
-                        mlflow.log_artifact('models/best_model_meta.pkl', artifact_path="model")
+                        mlflow.log_artifact(str(models_dir / 'best_model.txt'), artifact_path="model")
+                        mlflow.log_artifact(str(models_dir / 'best_model_meta.pkl'), artifact_path="model")
                         
                         # Also use the standard log_model for Model Registry
                         signature = mlflow.models.infer_signature(X_train_val, y_train_val)
@@ -872,8 +876,8 @@ def _run_training():
                 
                 # Only save and log if this is the best model
                 if model_name == best_model_name:
-                    final_model.save_model('models/best_model.cbm')
-                    with open('models/best_model_meta.pkl', 'wb') as f:
+                    final_model.save_model(str(models_dir / 'best_model.cbm'))
+                    with open(models_dir / 'best_model_meta.pkl', 'wb') as f:
                         pickle.dump({
                             'model_type': 'catboost',
                             'best_params': best_params
@@ -882,8 +886,8 @@ def _run_training():
                     print(f"  📦 Logging best model ({model_name}) to MLflow...")
                     try:
                         # Save model files as artifacts
-                        mlflow.log_artifact('models/best_model.cbm', artifact_path="model")
-                        mlflow.log_artifact('models/best_model_meta.pkl', artifact_path="model")
+                        mlflow.log_artifact(str(models_dir / 'best_model.cbm'), artifact_path="model")
+                        mlflow.log_artifact(str(models_dir / 'best_model_meta.pkl'), artifact_path="model")
                         
                         # Also log to registry
                         signature = mlflow.models.infer_signature(X_train_val, y_train_val)
@@ -928,8 +932,8 @@ def _run_training():
                 
                 # Only save and log if this is the best model
                 if model_name == best_model_name:
-                    final_model.save_model('models/best_model.json')
-                    with open('models/best_model_meta.pkl', 'wb') as f:
+                    final_model.save_model(str(models_dir / 'best_model.json'))
+                    with open(models_dir / 'best_model_meta.pkl', 'wb') as f:
                         pickle.dump({
                             'model_type': 'xgboost',
                             'best_params': best_params
@@ -938,8 +942,8 @@ def _run_training():
                     print(f"  📦 Logging best model ({model_name}) to MLflow...")
                     try:
                         # Save model files as artifacts
-                        mlflow.log_artifact('models/best_model.json', artifact_path="model")
-                        mlflow.log_artifact('models/best_model_meta.pkl', artifact_path="model")
+                        mlflow.log_artifact(str(models_dir / 'best_model.json'), artifact_path="model")
+                        mlflow.log_artifact(str(models_dir / 'best_model_meta.pkl'), artifact_path="model")
                         
                         # Also log to registry
                         signature = mlflow.models.infer_signature(X_train_val_xgb, y_train_val)
@@ -1052,7 +1056,7 @@ def _run_training():
         all_test_predictions[best_model_name] = test_pred_df
         
         # Save ensemble metadata
-        with open('models/best_model_meta.pkl', 'wb') as f:
+        with open(models_dir / 'best_model_meta.pkl', 'wb') as f:
             pickle.dump({
                 'model_type': 'ensemble',
                 'ensemble_method': ensemble_method,
@@ -1061,14 +1065,15 @@ def _run_training():
             }, f)
         
         # Log ensemble metadata
-        mlflow.log_artifact('models/best_model_meta.pkl', artifact_path="model")
+        mlflow.log_artifact(str(models_dir / 'best_model_meta.pkl'), artifact_path="model")
     
     # Save all test predictions to folder
+    test_pred_dir = data_dir / 'test_predictions_all'
     print("\n💾 Saving all test predictions...")
-    os.makedirs('data/test_predictions_all', exist_ok=True)
+    os.makedirs(test_pred_dir, exist_ok=True)
     for model_name, pred_df in all_test_predictions.items():
         safe_name = model_name.replace(' ', '_').replace('(', '').replace(')', '').replace('+', '_')
-        filename = f"data/test_predictions_all/{safe_name}.csv"
+        filename = test_pred_dir / f"{safe_name}.csv"
         pred_df.to_csv(filename, index=False)
         print(f"  ✅ Saved: {filename}")
     
@@ -1077,9 +1082,9 @@ def _run_training():
         'models': list(all_test_predictions.keys()),
         'n_samples': len(test_df)
     }
-    with open('data/test_predictions_all/metadata.json', 'w') as f:
+    with open(test_pred_dir / 'metadata.json', 'w') as f:
         json.dump(metadata, f, indent=2)
-    print(f"  ✅ Saved: data/test_predictions_all/metadata.json")
+    print(f"  ✅ Saved: {test_pred_dir / 'metadata.json'}")
     
     # Get best model's test predictions for final evaluation
     best_test_pred_df = all_test_predictions.get(best_model_name)
@@ -1088,7 +1093,7 @@ def _run_training():
         best_test_pred_df = list(all_test_predictions.values())[0]
     
     # Save best model's predictions to main location (for backward compatibility)
-    best_test_pred_df.to_csv('data/test_predictions.csv', index=False)
+    best_test_pred_df.to_csv(data_dir / 'test_predictions.csv', index=False)
     
     # Evaluate best model on test set
     test_metrics = evaluate_predictions_with_wmae(test_df, best_test_pred_df, holiday_weight=5.0)
@@ -1117,28 +1122,30 @@ def _run_training():
         comparison_data.append(metrics)
     
     comparison_df = pd.DataFrame(comparison_data)
-    comparison_df.to_csv('data/model_comparison.csv', index=False)
-    print(f"  ✅ Saved: data/model_comparison.csv")
-    
-    # Final test results
+    comparison_path = data_dir / 'model_comparison.csv'
+    comparison_df.to_csv(comparison_path, index=False)
+    print(f"  ✅ Saved: {comparison_path}")
+
+    final_results_path = data_dir / 'final_test_results.json'
     test_results = {
         'model': best_model_name,
         'test_metrics': test_metrics
     }
-    with open('data/final_test_results.json', 'w') as f:
+    with open(final_results_path, 'w') as f:
         json.dump(test_results, f, indent=2)
-    print(f"  ✅ Saved: data/final_test_results.json")
+    print(f"  ✅ Saved: {final_results_path}")
 
     # MLflow: log artifacts for this run
-    if os.path.isfile("data/model_comparison.csv"):
-        mlflow.log_artifact("data/model_comparison.csv", artifact_path="results")
-    if os.path.isfile("data/final_test_results.json"):
-        mlflow.log_artifact("data/final_test_results.json", artifact_path="results")
+    if comparison_path.is_file():
+        mlflow.log_artifact(str(comparison_path), artifact_path="results")
+    if final_results_path.is_file():
+        mlflow.log_artifact(str(final_results_path), artifact_path="results")
 
     # Write run_id so evaluate_models.py can attach evaluation artifacts to this run
     run = mlflow.active_run()
     if run:
-        with open("data/mlflow_run_id.txt", "w") as f:
+        run_id_path = data_dir / 'mlflow_run_id.txt'
+        with open(run_id_path, 'w') as f:
             f.write(run.info.run_id)
         print(f"  ✅ Saved MLflow run ID: {run.info.run_id}")
 

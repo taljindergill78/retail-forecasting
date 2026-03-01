@@ -5,8 +5,8 @@ stages:
     deps:
     - path: params.yaml
       hash: md5
-      md5: d45b12b2fc9f51164b3a86a0ace56b32
-      size: 2441
+      md5: 16ebf528fc6d4d2dcd2b4e0243da4a5e
+      size: 2453
     - path: tools/make_manifest.py
       hash: md5
       md5: fb68e04f6e04bbd63d9e08f03dc55dfe
@@ -17,49 +17,49 @@ stages:
       size: 2146
     params:
       params.yaml:
-        manifests.features_s3_uri: s3://retail-ml-taljinder-2025/raw/walmart/features/features.csv
-        manifests.stores_s3_uri: s3://retail-ml-taljinder-2025/raw/walmart/stores/stores.csv
-        manifests.train_s3_uri: s3://retail-ml-taljinder-2025/raw/walmart/train/train.csv
+        manifests.features_s3_uri: s3://retail-ml-taljinder-2025-new/raw/walmart/features/features.csv
+        manifests.stores_s3_uri: s3://retail-ml-taljinder-2025-new/raw/walmart/stores/stores.csv
+        manifests.train_s3_uri: s3://retail-ml-taljinder-2025-new/raw/walmart/train/train.csv
     outs:
     - path: data_manifests/walmart/features.manifest.json
       hash: md5
-      md5: 146390a7ae7048b4659d5bde9c78ed87
-      size: 219
+      md5: d9cc1ef05743527cf03b24b499a49cde
+      size: 223
     - path: data_manifests/walmart/stores.manifest.json
       hash: md5
-      md5: 882c34a1ba299d595e664a3fc504a8ae
-      size: 213
+      md5: d91150c2ce2979449292936bcf3a266a
+      size: 217
     - path: data_manifests/walmart/train.manifest.json
       hash: md5
-      md5: 74648c0ff934ea46917f67d295a31a97
-      size: 215
+      md5: a9509e51a0065f2ec39534746281a6f7
+      size: 219
   split:
     cmd: python src/data/split.py
     deps:
     - path: data_manifests/walmart/features.manifest.json
       hash: md5
-      md5: 146390a7ae7048b4659d5bde9c78ed87
-      size: 219
+      md5: d9cc1ef05743527cf03b24b499a49cde
+      size: 223
     - path: data_manifests/walmart/stores.manifest.json
       hash: md5
-      md5: 882c34a1ba299d595e664a3fc504a8ae
-      size: 213
+      md5: d91150c2ce2979449292936bcf3a266a
+      size: 217
     - path: data_manifests/walmart/train.manifest.json
       hash: md5
-      md5: 74648c0ff934ea46917f67d295a31a97
-      size: 215
+      md5: a9509e51a0065f2ec39534746281a6f7
+      size: 219
     - path: sql/02_create_analytics_view.sql
       hash: md5
       md5: b9055bd3bd9df8c14de17a442e2b2886
       size: 723
     - path: src/config.py
       hash: md5
-      md5: d664b8c0c2a947977d7a2a92c779d855
-      size: 1166
+      md5: 6bad13fc64b07a667cd1f99d23d27dc9
+      size: 2995
     - path: src/data/split.py
       hash: md5
-      md5: a7655c6fef6e6a550cee8eb2f6928a1b
-      size: 15160
+      md5: b3b7cc4dfc633db1cbfaae72232b0bb1
+      size: 15214
     params:
       params.yaml:
         split.train_end_date: '2011-12-31'
@@ -67,35 +67,35 @@ stages:
     outs:
     - path: data/splits/test.csv
       hash: md5
-      md5: 3fe8874db712ab42d8cfdc057932694a
+      md5: 67d39626550e9c4026a07e429b38da14
       size: 5063342
     - path: data/splits/train.csv
       hash: md5
-      md5: cea761d26ef8852b938db92077afdfa0
+      md5: dfd2966f401e0ce5d2664209592417b0
       size: 22382198
     - path: data/splits/val.csv
       hash: md5
-      md5: 7c2ec3a053200a0362f81b1d917d42af
+      md5: 14e14427660ca2b67f4fc3014639f04e
       size: 7866139
   eda:
     cmd: python src/eda/eda.py
     deps:
     - path: data/splits/test.csv
       hash: md5
-      md5: 3fe8874db712ab42d8cfdc057932694a
+      md5: 67d39626550e9c4026a07e429b38da14
       size: 5063342
     - path: data/splits/train.csv
       hash: md5
-      md5: cea761d26ef8852b938db92077afdfa0
+      md5: dfd2966f401e0ce5d2664209592417b0
       size: 22382198
     - path: data/splits/val.csv
       hash: md5
-      md5: 7c2ec3a053200a0362f81b1d917d42af
+      md5: 14e14427660ca2b67f4fc3014639f04e
       size: 7866139
     - path: src/eda/eda.py
       hash: md5
-      md5: e9f3dbf724d91bb18db51c3c9031496c
-      size: 17735
+      md5: a6bf342c47b954a3ca92e8990cf31a0f
+      size: 17791
     outs:
     - path: reports/eda/figures
       hash: md5
@@ -112,28 +112,28 @@ stages:
     deps:
     - path: data/splits/test.csv
       hash: md5
-      md5: 3fe8874db712ab42d8cfdc057932694a
+      md5: 67d39626550e9c4026a07e429b38da14
       size: 5063342
     - path: data/splits/train.csv
       hash: md5
-      md5: cea761d26ef8852b938db92077afdfa0
+      md5: dfd2966f401e0ce5d2664209592417b0
       size: 22382198
     - path: data/splits/val.csv
       hash: md5
-      md5: 7c2ec3a053200a0362f81b1d917d42af
+      md5: 14e14427660ca2b67f4fc3014639f04e
       size: 7866139
     - path: params.yaml
       hash: md5
-      md5: d45b12b2fc9f51164b3a86a0ace56b32
-      size: 2441
+      md5: 16ebf528fc6d4d2dcd2b4e0243da4a5e
+      size: 2453
     - path: src/config.py
       hash: md5
-      md5: d664b8c0c2a947977d7a2a92c779d855
-      size: 1166
+      md5: 6bad13fc64b07a667cd1f99d23d27dc9
+      size: 2995
     - path: src/features/feature_eng.py
       hash: md5
-      md5: 47e801a706c33eaccd64fb41c37053b9
-      size: 24494
+      md5: 04ca7bb025032ac0af81269e8477c831
+      size: 24677
     params:
       params.yaml:
         features.lags:
@@ -163,16 +163,16 @@ stages:
     deps:
     - path: data/splits/train.csv
       hash: md5
-      md5: cea761d26ef8852b938db92077afdfa0
+      md5: dfd2966f401e0ce5d2664209592417b0
       size: 22382198
     - path: data/splits/val.csv
       hash: md5
-      md5: 7c2ec3a053200a0362f81b1d917d42af
+      md5: 14e14427660ca2b67f4fc3014639f04e
       size: 7866139
     - path: src/config.py
       hash: md5
-      md5: d664b8c0c2a947977d7a2a92c779d855
-      size: 1166
+      md5: 6bad13fc64b07a667cd1f99d23d27dc9
+      size: 2995
     - path: src/model/baseline.py
       hash: md5
       md5: 577a103dc705253887ab8dffe9a5bd2d
@@ -183,27 +183,27 @@ stages:
       size: 10473
     - path: src/model/run_baselines.py
       hash: md5
-      md5: 4b967189c33a47b1bba43b524a5a26a5
-      size: 7315
+      md5: 43f38b72b408db300017dc7030161d2d
+      size: 7527
     params:
       params.yaml:
         evaluation.holiday_weight: 5.0
     outs:
     - path: data/baseline_results.csv
       hash: md5
-      md5: ba6f4cdf1f180d8f25b456250a879497
-      size: 630
+      md5: 7e58b66e8feb71545f401c6d798b34f0
+      size: 629
     - path: data/baseline_segments_all.csv
       hash: md5
-      md5: 66d64c004d12147dd3de65881fdc3ce7
-      size: 7534
+      md5: 832106d7b10e84d527810c744098c876
+      size: 7525
   train:
     cmd: python src/model/train.py
     deps:
     - path: data/baseline_results.csv
       hash: md5
-      md5: ba6f4cdf1f180d8f25b456250a879497
-      size: 630
+      md5: 7e58b66e8feb71545f401c6d798b34f0
+      size: 629
     - path: data/splits/test_features.csv
       hash: md5
       md5: a0f03ceb6b4ec877aa23c6be8c78c483
@@ -218,20 +218,20 @@ stages:
       size: 29800633
     - path: params.yaml
       hash: md5
-      md5: d45b12b2fc9f51164b3a86a0ace56b32
-      size: 2441
+      md5: 16ebf528fc6d4d2dcd2b4e0243da4a5e
+      size: 2453
     - path: src/config.py
       hash: md5
-      md5: d664b8c0c2a947977d7a2a92c779d855
-      size: 1166
+      md5: 6bad13fc64b07a667cd1f99d23d27dc9
+      size: 2995
     - path: src/model/evaluate.py
       hash: md5
       md5: f518e9d3a480176fae84486b1e9fc585
       size: 10473
     - path: src/model/train.py
       hash: md5
-      md5: ce11293d8a4989553e87c9f76065ae3a
-      size: 45963
+      md5: ae90cff37c6e0e5577c6dcbe376e7fb7
+      size: 46335
     params:
       params.yaml:
         evaluation.holiday_weight: 5.0
@@ -293,7 +293,7 @@ stages:
       size: 231
     - path: data/mlflow_run_id.txt
       hash: md5
-      md5: 87c4f965a9df613428221ce16fa0604b
+      md5: b8ad6fcf88f82718d808f045ebe3e733
       size: 32
     - path: data/model_comparison.csv
       hash: md5
@@ -322,7 +322,7 @@ stages:
       size: 231
     - path: data/mlflow_run_id.txt
       hash: md5
-      md5: 87c4f965a9df613428221ce16fa0604b
+      md5: b8ad6fcf88f82718d808f045ebe3e733
       size: 32
     - path: data/model_comparison.csv
       hash: md5
@@ -339,16 +339,16 @@ stages:
       nfiles: 4
     - path: src/config.py
       hash: md5
-      md5: d664b8c0c2a947977d7a2a92c779d855
-      size: 1166
+      md5: 6bad13fc64b07a667cd1f99d23d27dc9
+      size: 2995
     - path: src/model/evaluate.py
       hash: md5
       md5: f518e9d3a480176fae84486b1e9fc585
       size: 10473
     - path: src/model/evaluate_models.py
       hash: md5
-      md5: cdc88b005dbdf39a58bc5e4d00fd8811
-      size: 8537
+      md5: 088b1d91e315925873716cbcdbb71dd3
+      size: 8604
     params:
       params.yaml:
         evaluation.holiday_weight: 5.0

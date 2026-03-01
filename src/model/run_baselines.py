@@ -25,7 +25,7 @@ from src.model.baseline import (
     seasonal_average_forecast,
     hybrid_fallback_forecast
 )
-from src.config import load_params
+from src.config import load_params, get_splits_dir, get_data_dir
 from src.model.evaluate import evaluate_predictions_with_wmae, evaluate_by_segments
 
 
@@ -66,10 +66,12 @@ def main():
     print("📊 Baseline Model Evaluation (Enhanced)")
     print("=" * 60)
 
-    # Step 1: Load data
+    # Step 1: Load data (paths overridable via SPLITS_DIR on SageMaker)
+    splits_dir = get_splits_dir()
+    data_dir = get_data_dir()
     print("\n📥 Loading data...")
-    train_df = pd.read_csv('data/splits/train.csv')
-    val_df = pd.read_csv('data/splits/val.csv')
+    train_df = pd.read_csv(splits_dir / 'train.csv')
+    val_df = pd.read_csv(splits_dir / 'val.csv')
     
     # Convert dates to datetime
     train_df['week_date'] = pd.to_datetime(train_df['week_date'])
@@ -117,7 +119,7 @@ def main():
             for segment_col in ['store_type', 'isholiday', 'volume_quartile', 'is_top_dept']:
                 seg_df = evaluate_by_segments(val_df, pred, segment_col, holiday_weight=holiday_weight)
                 segments[segment_col] = seg_df
-                seg_df.to_csv(f'data/baseline_segments_{baseline_name.replace(" ", "_")}_{segment_col}.csv', index=False)
+                seg_df.to_csv(data_dir / f'baseline_segments_{baseline_name.replace(" ", "_")}_{segment_col}.csv', index=False)
             
             segmented_results[baseline_name] = segments
             
@@ -136,8 +138,8 @@ def main():
     comparison_df = comparison_df[['rmse', 'mae', 'wmae', 'mape', 'r_squared', 'n_samples']]
     print(comparison_df.to_string())
     
-    # Step 4: Save overall results
-    output_file = 'data/baseline_results.csv'
+    # Step 4: Save overall results (overridable via DATA_DIR on SageMaker)
+    output_file = data_dir / 'baseline_results.csv'
     comparison_df.to_csv(output_file)
     print(f"\n💾 Overall results saved to: {output_file}")
     
@@ -180,8 +182,8 @@ def main():
     
     if summary_segments:
         all_segments_df = pd.concat(summary_segments, ignore_index=True)
-        all_segments_df.to_csv('data/baseline_segments_all.csv', index=False)
-        print(f"\n💾 All segmented results saved to: data/baseline_segments_all.csv")
+        all_segments_df.to_csv(data_dir / 'baseline_segments_all.csv', index=False)
+        print(f"\n💾 All segmented results saved to: {data_dir / 'baseline_segments_all.csv'}")
     
     print("\n" + "=" * 60)
     print("✅ Baseline evaluation complete!")

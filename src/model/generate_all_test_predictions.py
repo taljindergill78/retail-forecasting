@@ -14,6 +14,7 @@ import json
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+from src.config import get_splits_dir, get_data_dir
 from src.model.train import prepare_features
 import lightgbm as lgb
 import catboost as cb
@@ -25,11 +26,13 @@ def generate_all_test_predictions():
     print("🔄 Generating Test Predictions for All Models")
     print("=" * 60)
     
-    # Load data
+    # Load data (paths overridable via SPLITS_DIR on SageMaker)
+    splits_dir = get_splits_dir()
+    data_dir = get_data_dir()
     print("\n📥 Loading data...")
-    train_df = pd.read_csv('data/splits/train_features.csv')
-    val_df = pd.read_csv('data/splits/val_features.csv')
-    test_df = pd.read_csv('data/splits/test_features.csv')
+    train_df = pd.read_csv(splits_dir / 'train_features.csv')
+    val_df = pd.read_csv(splits_dir / 'val_features.csv')
+    test_df = pd.read_csv(splits_dir / 'test_features.csv')
     
     train_df['week_date'] = pd.to_datetime(train_df['week_date'])
     val_df['week_date'] = pd.to_datetime(val_df['week_date'])
@@ -37,7 +40,7 @@ def generate_all_test_predictions():
     
     # Load model comparison results to get best params
     print("📊 Loading model results...")
-    comparison_df = pd.read_csv('data/model_comparison.csv')
+    comparison_df = pd.read_csv(data_dir / 'model_comparison.csv')
     
     # Combine train and val
     train_val_df = pd.concat([train_df, val_df], ignore_index=True)
@@ -165,12 +168,13 @@ def generate_all_test_predictions():
         except Exception as e:
             print(f"  ❌ Error: {e}")
     
-    # Save all predictions
+    # Save all predictions (overridable via DATA_DIR on SageMaker)
+    test_pred_dir = data_dir / 'test_predictions_all'
     print("\n💾 Saving predictions...")
-    os.makedirs('data/test_predictions_all', exist_ok=True)
+    os.makedirs(test_pred_dir, exist_ok=True)
     
     for model_name, pred_df in all_predictions.items():
-        filename = f"data/test_predictions_all/{model_name.replace(' ', '_').replace('(', '').replace(')', '').replace('+', '_')}.csv"
+        filename = test_pred_dir / f"{model_name.replace(' ', '_').replace('(', '').replace(')', '').replace('+', '_')}.csv"
         pred_df.to_csv(filename, index=False)
         print(f"  ✅ Saved: {filename}")
     
@@ -179,14 +183,14 @@ def generate_all_test_predictions():
         'models': list(all_predictions.keys()),
         'n_samples': len(test_df)
     }
-    with open('data/test_predictions_all/metadata.json', 'w') as f:
+    with open(test_pred_dir / 'metadata.json', 'w') as f:
         json.dump(metadata, f, indent=2)
     
     print("\n" + "=" * 60)
     print("✅ All test predictions generated!")
     print("=" * 60)
     print(f"\n📊 Generated predictions for {len(all_predictions)} models")
-    print("📁 Saved to: data/test_predictions_all/")
+    print(f"📁 Saved to: {test_pred_dir}")
 
 
 if __name__ == "__main__":

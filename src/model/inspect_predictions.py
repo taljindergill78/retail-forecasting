@@ -16,6 +16,7 @@ import os
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, project_root)
 
+from src.config import get_splits_dir
 from src.model.baseline import (
     naive_forecast,
     seasonal_naive_forecast,
@@ -36,9 +37,10 @@ def inspect_predictions(store_id=1, dept_id=1, n_samples=10):
     print(f"🔍 Inspecting Predictions: Store {store_id}, Dept {dept_id}")
     print("=" * 80)
     
-    # Load data
-    train_df = pd.read_csv('data/splits/train.csv')
-    val_df = pd.read_csv('data/splits/val.csv')
+    # Load data (paths overridable via SPLITS_DIR)
+    splits_dir = get_splits_dir()
+    train_df = pd.read_csv(splits_dir / 'train.csv')
+    val_df = pd.read_csv(splits_dir / 'val.csv')
     
     train_df['week_date'] = pd.to_datetime(train_df['week_date'])
     val_df['week_date'] = pd.to_datetime(val_df['week_date'])
