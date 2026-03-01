@@ -70,8 +70,6 @@ S3 (raw CSVs) → Glue ETL → RDS (retailds: fact_sales_weekly, dim_store, dim_
 | **Docker** | ✅ | `Dockerfile` for SageMaker (Python 3.11, `WORKDIR /opt/ml/code`, `ENTRYPOINT ["python"]`) |
 | **Phase B (SageMaker)** | In progress | Steps 1–6 done (IAM, VPC, S3, MLflow on EC2, image in ECR, scripts adapted for env-based paths). Step 7 (run SageMaker jobs one by one, then chain) is next. |
 
-Nothing in this table is overstated: if a feature is listed as implemented, it exists and is used in the current pipeline or infrastructure.
-
 ---
 
 ## Project Structure
@@ -224,8 +222,6 @@ High-level planning and rationale (e.g. MLflow vs SageMaker Model Registry, appr
 ---
 
 ## Next Steps (Planned)
-
-These are intended directions, not promises; they will be updated as work is done.
 
 - **Phase B (SageMaker):** Run and verify each SageMaker job (split, features, train, evaluate), then define a SageMaker Pipeline and a register-model step. Optionally run EDA or baselines as SageMaker jobs.
 - **Model registry and approval:** Use SageMaker Model Registry with a PendingManualApproval → Approved flow so only approved models are used downstream.
