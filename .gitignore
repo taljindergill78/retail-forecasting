@@ -44,6 +44,7 @@ infra/lambdas/*/*.zip
 *.env
 infra/sagemaker_config.env
 infra/sagemaker_config.env.example
+infra/sagemaker_config.env.sample
 
 # SSH keys (NEVER commit private keys!)
 *.pem

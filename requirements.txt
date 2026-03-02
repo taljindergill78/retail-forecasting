@@ -22,3 +22,6 @@ xgboost>=2.0.0  # Optional: Complete gradient boosting trio
 mlflow>=2.9.0
 # Pin protobuf: MLflow UI breaks with protobuf 6.x (FieldDescriptor.is_repeated API change)
 protobuf>=3.20,<6
+
+# SageMaker SDK (needed for ProcessingJob, Pipelines SDK usage, and sagemaker.processing imports)
+sagemaker==2.240.0
