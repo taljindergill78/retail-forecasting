@@ -59,6 +59,12 @@ def get_splits_dir():
     return Path(path) if path else data / "splits"
 
 
+def get_features_dir():
+    """Directory for feature CSVs. Default: same as splits_dir (data/splits)."""
+    path = os.environ.get("FEATURES_DIR")
+    return Path(path) if path else get_splits_dir()
+
+
 def get_models_dir():
     """Directory for saved models. Default: project_root/models."""
     root = get_project_root()

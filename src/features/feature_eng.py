@@ -20,7 +20,7 @@ import pandas as pd
 import numpy as np
 from typing import List
 
-from src.config import load_params, get_splits_dir
+from src.config import load_params, get_splits_dir, get_features_dir
 
 
 def add_time_features(df):
@@ -577,6 +577,8 @@ def main():
     
     # Load splits (path overridable via SPLITS_DIR on SageMaker)
     splits_dir = get_splits_dir()
+    # Where to write feature CSVs (FEATURES_DIR overrides; default = same as splits_dir)
+    features_dir = get_features_dir()
     print("\n📥 Loading data splits...")
     train_df = pd.read_csv(splits_dir / 'train.csv')
     val_df = pd.read_csv(splits_dir / 'val.csv')
@@ -601,15 +603,15 @@ def main():
         rolling_windows=feat_params.get("rolling_windows", [4, 8]),
     )
     
-    # Save feature-engineered datasets (same dir as splits; overridable via SPLITS_DIR on SageMaker)
+    # Save feature-engineered datasets (SageMaker can override FEATURES_DIR separately)
     print("\n💾 Saving feature-engineered datasets...")
-    train_feat.to_csv(splits_dir / 'train_features.csv', index=False)
-    val_feat.to_csv(splits_dir / 'val_features.csv', index=False)
-    test_feat.to_csv(splits_dir / 'test_features.csv', index=False)
+    train_feat.to_csv(features_dir / 'train_features.csv', index=False)
+    val_feat.to_csv(features_dir / 'val_features.csv', index=False)
+    test_feat.to_csv(features_dir / 'test_features.csv', index=False)
     
-    print(f"  ✅ Saved: {splits_dir / 'train_features.csv'}")
-    print(f"  ✅ Saved: {splits_dir / 'val_features.csv'}")
-    print(f"  ✅ Saved: {splits_dir / 'test_features.csv'}")
+    print(f"  ✅ Saved: {features_dir / 'train_features.csv'}")
+    print(f"  ✅ Saved: {features_dir / 'val_features.csv'}")
+    print(f"  ✅ Saved: {features_dir / 'test_features.csv'}")
     
     # Show feature summary
     print("\n" + "=" * 60)
