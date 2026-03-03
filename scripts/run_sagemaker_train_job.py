@@ -88,13 +88,14 @@ S3_BASELINES_PREFIX = os.environ.get("S3_BASELINES_PREFIX") or f"s3://{S3_BUCKET
 S3_TRAIN_OUTPUT_PREFIX = os.environ.get("S3_TRAIN_OUTPUT_PREFIX") or f"s3://{S3_BUCKET}/sagemaker/models"
 
 FEATURES_PATH = "/opt/ml/processing/input/features"
-DATA_PATH = "/opt/ml/processing/input/data"
+BASELINES_PATH = "/opt/ml/processing/input/baselines"
 OUTPUT_PATH = "/opt/ml/processing/output"
 
 env = {
     "SPLITS_DIR": FEATURES_PATH,
-    "DATA_DIR": DATA_PATH,
-    "MODELS_DIR": OUTPUT_PATH,
+    "DATA_DIR": OUTPUT_PATH,        # all training outputs go here (exported to S3)
+    "MODELS_DIR": OUTPUT_PATH,      # models saved here too
+    "BASELINES_DIR": BASELINES_PATH,
     "MLFLOW_TRACKING_URI": MLFLOW_TRACKING_URI,
     "AWS_REGION": AWS_REGION,
 }
@@ -124,7 +125,7 @@ processor.run(
         ),
         ProcessingInput(
             source=S3_BASELINES_PREFIX,
-            destination=DATA_PATH,
+            destination=BASELINES_PATH,
             input_name="data",
         ),
     ],

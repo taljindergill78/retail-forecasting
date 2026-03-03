@@ -36,7 +36,13 @@ import mlflow
 import mlflow.pyfunc
 
 from src.model.evaluate import evaluate_predictions_with_wmae, evaluate_by_segments
-from src.config import get_splits_dir, get_data_dir, get_models_dir, get_mlflow_tracking_uri
+from src.config import (
+    get_splits_dir,
+    get_data_dir,
+    get_models_dir,
+    get_mlflow_tracking_uri,
+    get_baselines_dir,
+)
 
 
 # Define feature groups for easier management
@@ -610,9 +616,10 @@ def _run_training():
     print("🤖 Model Training & Comparison")
     print("=" * 60)
 
-    # Load feature-engineered data (paths overridable via SPLITS_DIR, DATA_DIR, MODELS_DIR on SageMaker)
+    # Load feature-engineered data (paths overridable via env on SageMaker)
     splits_dir = get_splits_dir()
     data_dir = get_data_dir()
+    baselines_dir = get_baselines_dir()
     models_dir = get_models_dir()
     print("\n📥 Loading feature-engineered data...")
     train_df = pd.read_csv(splits_dir / 'train_features.csv')
@@ -634,7 +641,7 @@ def _run_training():
 
     # Load baseline results for comparison
     print("\n📊 Loading baseline results...")
-    baseline_results = pd.read_csv(data_dir / 'baseline_results.csv', index_col=0)
+    baseline_results = pd.read_csv(baselines_dir / 'baseline_results.csv', index_col=0)
     seasonal_naive_rmse = baseline_results.loc['Seasonal Naive', 'rmse']
     seasonal_naive_wmae = baseline_results.loc['Seasonal Naive', 'wmae']
     

@@ -72,6 +72,13 @@ def get_models_dir():
     return Path(path) if path else root / "models"
 
 
+def get_baselines_dir():
+    """Directory for baseline results. Default: same as data_dir."""
+    data = get_data_dir()
+    path = os.environ.get("BASELINES_DIR")
+    return Path(path) if path else data
+
+
 def get_reports_dir():
     """Directory for reports and figures. Default: project_root/reports."""
     root = get_project_root()
