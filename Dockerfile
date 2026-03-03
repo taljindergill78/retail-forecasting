@@ -15,6 +15,11 @@ WORKDIR /opt/ml/code
 # "pip install" won't re-run on every build (faster rebuilds).
 COPY requirements.txt .
 
+# Install system libs needed by some Python packages (e.g. LightGBM needs libgomp.so.1)
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends libgomp1 \
+ && rm -rf /var/lib/apt/lists/*
+
 # Install Python dependencies. --no-cache-dir keeps the image smaller.
 RUN pip install --no-cache-dir -r requirements.txt
 
