@@ -7,6 +7,7 @@ Run as part of the DVC pipeline after train:
 """
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -21,7 +22,8 @@ from src.config import load_params, get_data_dir, get_splits_dir, get_reports_di
 from src.model.evaluate import evaluate_predictions_with_wmae, evaluate_by_segments
 
 REPORTS_DIR = get_reports_dir()
-FIGURES_DIR = REPORTS_DIR / "figures"
+_figures_dir_env = os.environ.get("FIGURES_DIR")
+FIGURES_DIR = Path(_figures_dir_env) if _figures_dir_env else REPORTS_DIR / "figures"
 
 
 def create_evaluation_report(all_metrics, comparison_path, report_path):
@@ -137,6 +139,7 @@ def main():
         best_pred_df = all_predictions[best_model_name]
 
     # Create report
+    REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
     report_path = REPORTS_DIR / "model_evaluation_report.csv"
     print("\n📝 Creating evaluation report...")
