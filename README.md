@@ -215,17 +215,17 @@ All paths used by these scripts are configurable via `src/config.py` (and env va
 The pipeline is adapted so the **same code** runs locally and on SageMaker:
 
 - **Done:** IAM role for SageMaker, VPC/security groups so SageMaker can reach RDS and MLflow, S3 layout for pipeline outputs, MLflow server on EC2 (RDS backend + S3 artifacts), Docker image in ECR, and script changes so all I/O and MLflow URI come from `src/config.py` (env-driven). See `docs/PHASE_B_STEP_6_ADAPT_SCRIPTS_FOR_SAGEMAKER_GUIDE.md` for what was changed and why.
-- **Next:** Run SageMaker jobs one at a time (split → features → train → evaluate), then chain them into a pipeline and add a model registration step. The runbook and example job definitions are in `docs/PHASE_B_STEP_7_RUN_SAGEMAKER_JOBS_GUIDE.md`.
+- **Next:** Run SageMaker jobs one at a time (split → features → train → evaluate), then chain them into a pipeline. After Evaluate, models are governed **only via MLflow Model Registry stages** (Staging / Production). The runbook and example job definitions are in `docs/PHASE_B_STEP_7_RUN_SAGEMAKER_JOBS_GUIDE.md`.
 
-High-level planning and rationale (e.g. MLflow vs SageMaker Model Registry, approval workflow) are in `reports/2. NEXT_STEPS_AWS_SAGEMAKER_PHASE_B.md` and related reports.
+High-level planning and rationale (e.g. why we use **MLflow Model Registry as the single approval gate** instead of adding SageMaker Model Registry, and how ECS reads only Production) are in `reports/3. PHASE_B_EVALUATION_MLflow_SageMaker_Governance.md` and `docs/PHASE_B_STEP_8_REGISTER_MODEL_SAGEMAKER_MODEL_REGISTRY_GUIDE.md`.
 
 ---
 
 ## Next Steps (Planned)
 
-- **Phase B (SageMaker):** Run and verify each SageMaker job (split, features, train, evaluate), then define a SageMaker Pipeline and a register-model step. Optionally run EDA or baselines as SageMaker jobs.
-- **Model registry and approval:** Use SageMaker Model Registry with a PendingManualApproval → Approved flow so only approved models are used downstream.
-- **Serving (Phase C):** FastAPI (or similar) in Docker, loading only approved models from the registry.
+- **Phase B (SageMaker):** Run and verify each SageMaker job (split, features, train, evaluate), then define a SageMaker Pipeline. Registration/approval is handled in **MLflow Model Registry** via Staging/Production stages (no separate SageMaker Model Registry).
+- **Model registry and approval:** Use **MLflow Model Registry** as the single source of truth. New versions go to **Staging** after manual review; **Production** is the one and only version that downstream systems are allowed to use.
+- **Serving (Phase C):** FastAPI (or similar) in Docker, loading only the MLflow **Production** model (`models:/RetailSalesForecaster/Production`).
 - **Deployment (Phase D):** Deploy the serving API on EKS.
 - **CI/CD (Phase E):** Automate tests and deployment when new models are approved.
 - **Monitoring and batch inference:** Add monitoring, alarms, and optional batch inference (later phases).
