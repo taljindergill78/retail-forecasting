@@ -25,3 +25,7 @@ protobuf>=3.20,<6
 
 # SageMaker SDK (needed for ProcessingJob, Pipelines SDK usage, and sagemaker.processing imports)
 sagemaker==2.240.0
+
+# Serving API (Phase C)
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0

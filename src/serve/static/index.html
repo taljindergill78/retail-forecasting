@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Retail Sales Forecaster</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 2rem 1rem 4rem;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .page-header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #f8fafc;
+      letter-spacing: -0.5px;
+    }
+    .page-header p {
+      margin-top: 0.4rem;
+      color: #64748b;
+      font-size: 0.9rem;
+    }
+    .badge {
+      display: inline-block;
+      background: #1e3a5f;
+      color: #60a5fa;
+      border: 1px solid #2563eb44;
+      border-radius: 999px;
+      padding: 0.15rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-top: 0.5rem;
+      letter-spacing: 0.05em;
+    }
+
+    .container { max-width: 900px; margin: 0 auto; }
+
+    /* ── Cards ── */
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .card-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #60a5fa;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .card-title span.icon { font-size: 1rem; }
+
+    /* ── Grid ── */
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    /* ── Fields ── */
+    .field { display: flex; flex-direction: column; gap: 0.3rem; }
+    .field label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .field label .req { color: #f87171; margin-left: 2px; }
+    .field label .opt { color: #475569; font-weight: 400; font-size: 0.7rem; text-transform: none; letter-spacing: 0; }
+    .field input, .field select {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #e2e8f0;
+      padding: 0.45rem 0.6rem;
+      font-size: 0.875rem;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+    .field input:focus, .field select:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+    .field input::placeholder { color: #475569; }
+    .field input.optional { border-color: #1e3a5f; }
+    .field input.optional:focus { border-color: #3b82f6; }
+
+    /* ── Collapsible optional section ── */
+    .toggle-btn {
+      background: none;
+      border: 1px dashed #334155;
+      border-radius: 8px;
+      color: #64748b;
+      cursor: pointer;
+      font-size: 0.8rem;
+      padding: 0.6rem 1rem;
+      width: 100%;
+      text-align: left;
+      margin-bottom: 1rem;
+      transition: border-color 0.15s, color 0.15s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .toggle-btn:hover { border-color: #3b82f6; color: #93c5fd; }
+    .toggle-arrow { transition: transform 0.2s; }
+    .toggle-arrow.open { transform: rotate(180deg); }
+    .optional-section { display: none; }
+    .optional-section.open { display: block; }
+
+    /* ── Submit button ── */
+    .submit-wrap { text-align: center; margin-top: 1.5rem; }
+    .btn-predict {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      padding: 0.85rem 3rem;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn-predict:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-predict:active { transform: translateY(0); }
+    .btn-predict:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ── Result ── */
+    #result-box {
+      display: none;
+      margin-top: 1.5rem;
+      border-radius: 12px;
+      padding: 1.75rem 2rem;
+      text-align: center;
+      border: 1px solid;
+    }
+    #result-box.success {
+      background: #052e16;
+      border-color: #166534;
+    }
+    #result-box.error {
+      background: #2d0a0a;
+      border-color: #7f1d1d;
+    }
+    #result-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #4ade80;
+      margin-bottom: 0.5rem;
+    }
+    #result-box.error #result-label { color: #f87171; }
+    #result-value {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #f0fdf4;
+    }
+    #result-box.error #result-value {
+      font-size: 0.9rem;
+      color: #fca5a5;
+      word-break: break-word;
+      text-align: left;
+    }
+    #result-sub {
+      font-size: 0.8rem;
+      color: #4ade8088;
+      margin-top: 0.3rem;
+    }
+
+    /* ── Spinner ── */
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 3px solid #ffffff44;
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 0.5rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="page-header">
+    <h1>Retail Sales Forecaster</h1>
+    <p>Enter store and week details below to get a weekly sales prediction.</p>
+    <span class="badge">MLflow Production Model · models:/RetailSalesForecaster/Production</span>
+  </div>
+
+  <form id="predictForm" novalidate>
+
+    <!-- 1. Store & Department -->
+    <div class="card">
+      <div class="card-title"><span class="icon">🏬</span> Store &amp; Department</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Store ID <span class="req">*</span></label>
+          <input type="number" name="store_id" value="1" min="1" max="45" required />
+        </div>
+        <div class="field">
+          <label>Department ID <span class="req">*</span></label>
+          <input type="number" name="dept_id" value="1" min="1" required />
+        </div>
+        <div class="field">
+          <label>Store Type <span class="req">*</span></label>
+          <select name="store_type" required>
+            <option value="A" selected>A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Store Size (sq ft) <span class="req">*</span></label>
+          <input type="number" name="store_size" value="151315" min="1" required />
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Calendar -->
+    <div class="card">
+      <div class="card-title"><span class="icon">📅</span> Calendar</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Year <span class="req">*</span></label>
+          <input type="number" name="year" value="2010" required />
+        </div>
+        <div class="field">
+          <label>Month <span class="req">*</span></label>
+          <input type="number" name="month" value="2" min="1" max="12" required />
+        </div>
+        <div class="field">
+          <label>Week of Year <span class="req">*</span></label>
+          <input type="number" name="week_of_year" value="5" min="1" max="53" required />
+        </div>
+        <div class="field">
+          <label>Day of Year <span class="req">*</span></label>
+          <input type="number" name="day_of_year" value="36" min="1" max="366" required />
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Holiday Flags -->
+    <div class="card">
+      <div class="card-title"><span class="icon">🎉</span> Holiday Flags</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Is Holiday Week <span class="req">*</span></label>
+          <select name="isholiday" required>
+            <option value="false" selected>No (false)</option>
+            <option value="true">Yes (true)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Prev Week Holiday <span class="req">*</span></label>
+          <select name="is_holiday_prev1" required>
+            <option value="0" selected>0 — No</option>
+            <option value="1">1 — Yes</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Next Week Holiday <span class="req">*</span></label>
+          <select name="is_holiday_next1" required>
+            <option value="0" selected>0 — No</option>
+            <option value="1">1 — Yes</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Within 7d After Holiday <span class="req">*</span></label>
+          <select name="within_7days_after_holiday" required>
+            <option value="0" selected>0 — No</option>
+            <option value="1">1 — Yes</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Within 7d Before Holiday <span class="req">*</span></label>
+          <select name="within_7days_before_holiday" required>
+            <option value="0" selected>0 — No</option>
+            <option value="1">1 — Yes</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Economic Indicators -->
+    <div class="card">
+      <div class="card-title"><span class="icon">📊</span> Economic Indicators</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Temperature (°F) <span class="req">*</span></label>
+          <input type="number" step="0.01" name="temperature" value="42.31" required />
+        </div>
+        <div class="field">
+          <label>Fuel Price (USD) <span class="req">*</span></label>
+          <input type="number" step="0.001" name="fuel_price" value="2.572" required />
+        </div>
+        <div class="field">
+          <label>CPI <span class="req">*</span></label>
+          <input type="number" step="0.01" name="cpi" value="211.09" required />
+        </div>
+        <div class="field">
+          <label>Unemployment (%) <span class="req">*</span></label>
+          <input type="number" step="0.001" name="unemployment" value="8.106" required />
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Markdowns -->
+    <div class="card">
+      <div class="card-title"><span class="icon">🏷️</span> Promotional Markdowns</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Markdown 1 <span class="req">*</span></label>
+          <input type="number" step="0.01" name="markdown1" value="0" required />
+        </div>
+        <div class="field">
+          <label>Markdown 2 <span class="req">*</span></label>
+          <input type="number" step="0.01" name="markdown2" value="0" required />
+        </div>
+        <div class="field">
+          <label>Markdown 3 <span class="req">*</span></label>
+          <input type="number" step="0.01" name="markdown3" value="0" required />
+        </div>
+        <div class="field">
+          <label>Markdown 4 <span class="req">*</span></label>
+          <input type="number" step="0.01" name="markdown4" value="0" required />
+        </div>
+        <div class="field">
+          <label>Markdown 5 <span class="req">*</span></label>
+          <input type="number" step="0.01" name="markdown5" value="0" required />
+        </div>
+        <div class="field">
+          <label>Markdown Total <span class="req">*</span></label>
+          <input type="number" step="0.01" name="markdown_total" value="0" required />
+        </div>
+        <div class="field">
+          <label>Has Markdown <span class="req">*</span></label>
+          <select name="has_markdown" required>
+            <option value="0" selected>0 — No</option>
+            <option value="1">1 — Yes</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Optional: Lag & Rolling Features -->
+    <div class="card">
+      <div class="card-title"><span class="icon">🔁</span> Lag &amp; Rolling Features <span style="color:#475569;font-size:0.7rem;font-weight:400;text-transform:none;letter-spacing:0;">&nbsp;— optional</span></div>
+
+      <button type="button" class="toggle-btn" id="lagToggle" onclick="toggleSection('lagSection', 'lagArrow')">
+        <span>Show lag &amp; rolling features (leave blank if unavailable)</span>
+        <span class="toggle-arrow" id="lagArrow">▼</span>
+      </button>
+
+      <div class="optional-section" id="lagSection">
+
+        <p style="font-size:0.75rem;color:#64748b;margin-bottom:1rem;">
+          These are computed from historical data. Leave blank (<code style="color:#94a3b8">null</code>) for stores/departments with no prior history.
+        </p>
+
+        <!-- Sales lags -->
+        <div style="margin-bottom:0.5rem;font-size:0.72rem;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Sales lags</div>
+        <div class="field-grid" style="margin-bottom:1rem;">
+          <div class="field"><label>Lag 1 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="lag_1" value="24924.5" class="optional" placeholder="null" /></div>
+          <div class="field"><label>Lag 2 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="lag_2" value="46039.49" class="optional" placeholder="null" /></div>
+          <div class="field"><label>Lag 4 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="lag_4" value="41595.55" class="optional" placeholder="null" /></div>
+          <div class="field"><label>Lag 52 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="lag_52" class="optional" placeholder="null" /></div>
+        </div>
+
+        <!-- Rolling stats -->
+        <div style="margin-bottom:0.5rem;font-size:0.72rem;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Sales rolling statistics</div>
+        <div class="field-grid" style="margin-bottom:1rem;">
+          <div class="field"><label>Rolling Mean 4 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="rolling_mean_4" value="40000" class="optional" placeholder="null" /></div>
+          <div class="field"><label>Rolling Mean 8 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="rolling_mean_8" value="38000" class="optional" placeholder="null" /></div>
+          <div class="field"><label>Rolling Std 4 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="rolling_std_4" value="3000" class="optional" placeholder="null" /></div>
+          <div class="field"><label>Rolling Std 8 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="rolling_std_8" value="3500" class="optional" placeholder="null" /></div>
+        </div>
+
+        <!-- Markdown lags -->
+        <div style="margin-bottom:0.5rem;font-size:0.72rem;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Markdown total lags</div>
+        <div class="field-grid" style="margin-bottom:1rem;">
+          <div class="field"><label>MD Total Lag 1 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="markdown_total_lag_1" class="optional" placeholder="null" /></div>
+          <div class="field"><label>MD Total Lag 2 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="markdown_total_lag_2" class="optional" placeholder="null" /></div>
+          <div class="field"><label>MD Total Lag 4 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="markdown_total_lag_4" class="optional" placeholder="null" /></div>
+          <div class="field"><label>MD Total Lag 52 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="markdown_total_lag_52" class="optional" placeholder="null" /></div>
+          <div class="field"><label>MD Rolling Mean 4 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="markdown_total_rolling_mean_4" class="optional" placeholder="null" /></div>
+          <div class="field"><label>MD Rolling Mean 8 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="markdown_total_rolling_mean_8" class="optional" placeholder="null" /></div>
+        </div>
+
+        <!-- Fuel price lags -->
+        <div style="margin-bottom:0.5rem;font-size:0.72rem;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Fuel price lags</div>
+        <div class="field-grid" style="margin-bottom:1rem;">
+          <div class="field"><label>Fuel Lag 1 <span class="opt">(optional)</span></label><input type="number" step="0.001" name="fuel_price_lag_1" class="optional" placeholder="null" /></div>
+          <div class="field"><label>Fuel Lag 2 <span class="opt">(optional)</span></label><input type="number" step="0.001" name="fuel_price_lag_2" class="optional" placeholder="null" /></div>
+          <div class="field"><label>Fuel Lag 4 <span class="opt">(optional)</span></label><input type="number" step="0.001" name="fuel_price_lag_4" class="optional" placeholder="null" /></div>
+          <div class="field"><label>Fuel Lag 52 <span class="opt">(optional)</span></label><input type="number" step="0.001" name="fuel_price_lag_52" class="optional" placeholder="null" /></div>
+          <div class="field"><label>Fuel Rolling Mean 4 <span class="opt">(optional)</span></label><input type="number" step="0.001" name="fuel_price_rolling_mean_4" class="optional" placeholder="null" /></div>
+          <div class="field"><label>Fuel Rolling Mean 8 <span class="opt">(optional)</span></label><input type="number" step="0.001" name="fuel_price_rolling_mean_8" class="optional" placeholder="null" /></div>
+        </div>
+
+        <!-- Temperature lags -->
+        <div style="margin-bottom:0.5rem;font-size:0.72rem;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Temperature lags</div>
+        <div class="field-grid">
+          <div class="field"><label>Temp Lag 1 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="temperature_lag_1" class="optional" placeholder="null" /></div>
+          <div class="field"><label>Temp Lag 2 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="temperature_lag_2" class="optional" placeholder="null" /></div>
+          <div class="field"><label>Temp Lag 4 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="temperature_lag_4" class="optional" placeholder="null" /></div>
+          <div class="field"><label>Temp Lag 52 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="temperature_lag_52" class="optional" placeholder="null" /></div>
+          <div class="field"><label>Temp Rolling Mean 4 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="temperature_rolling_mean_4" class="optional" placeholder="null" /></div>
+          <div class="field"><label>Temp Rolling Mean 8 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="temperature_rolling_mean_8" class="optional" placeholder="null" /></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="submit-wrap">
+      <button type="submit" class="btn-predict" id="submitBtn">Predict Sales</button>
+    </div>
+
+  </form>
+
+  <!-- Result -->
+  <div id="result-box">
+    <div id="result-label">Predicted Weekly Sales</div>
+    <div id="result-value"></div>
+    <div id="result-sub"></div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+  function toggleSection(sectionId, arrowId) {
+    const section = document.getElementById(sectionId);
+    const arrow = document.getElementById(arrowId);
+    section.classList.toggle('open');
+    arrow.classList.toggle('open');
+  }
+
+  // String fields — must be kept as strings, not parsed as numbers
+  const STRING_FIELDS = new Set(['store_type']);
+
+  // Integer fields
+  const INT_FIELDS = new Set([
+    'store_id', 'dept_id', 'store_size',
+    'week_of_year', 'month', 'year', 'day_of_year',
+    'is_holiday_prev1', 'is_holiday_next1',
+    'within_7days_after_holiday', 'within_7days_before_holiday',
+    'has_markdown'
+  ]);
+
+  function buildPayload(form) {
+    const data = new FormData(form);
+    const payload = {};
+    for (const [name, rawValue] of data.entries()) {
+      const v = rawValue.trim();
+      if (name === 'isholiday') {
+        payload[name] = v === 'true';
+      } else if (STRING_FIELDS.has(name)) {
+        payload[name] = v === '' ? null : v;           // keep as string
+      } else if (INT_FIELDS.has(name)) {
+        payload[name] = v === '' ? null : parseInt(v, 10);
+      } else {
+        payload[name] = v === '' ? null : parseFloat(v);
+      }
+    }
+    return payload;
+  }
+
+  document.getElementById('predictForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const btn = document.getElementById('submitBtn');
+    const resultBox = document.getElementById('result-box');
+    const resultLabel = document.getElementById('result-label');
+    const resultValue = document.getElementById('result-value');
+    const resultSub = document.getElementById('result-sub');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Predicting…';
+    resultBox.style.display = 'none';
+
+    const payload = buildPayload(e.target);
+
+    try {
+      const response = await fetch('/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows: [payload] })
+      });
+
+      const json = await response.json();
+
+      if (response.ok) {
+        const pred = json.predictions[0];
+        resultBox.className = 'success';
+        resultLabel.textContent = 'Predicted Weekly Sales';
+        resultValue.textContent = new Intl.NumberFormat('en-US', {
+          style: 'currency', currency: 'USD', maximumFractionDigits: 2
+        }).format(pred);
+        resultSub.textContent =
+          `Store ${payload.store_id} · Dept ${payload.dept_id} · ` +
+          `Week ${payload.week_of_year}, ${payload.year}`;
+      } else {
+        resultBox.className = 'error';
+        resultLabel.textContent = 'Prediction Error';
+        const detail = json.detail;
+        resultValue.textContent = typeof detail === 'string'
+          ? detail
+          : JSON.stringify(detail, null, 2);
+        resultSub.textContent = `HTTP ${response.status}`;
+      }
+    } catch (err) {
+      resultBox.className = 'error';
+      resultLabel.textContent = 'Network Error';
+      resultValue.textContent = err.message || 'Could not reach the prediction API.';
+      resultSub.textContent = '';
+    }
+
+    resultBox.style.display = 'block';
+    resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    btn.disabled = false;
+    btn.innerHTML = 'Predict Sales';
+  });
+</script>
+
+</body>
+</html>

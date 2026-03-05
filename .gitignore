@@ -1,5 +1,6 @@
 # Python
 .venv/
+.venv311/
 __pycache__/
 *.pyc
 
@@ -53,6 +54,11 @@ mlflow-tracking-ec2-key.pem
 # Jupyter notebooks (testing/experimental)
 src/model/testing.ipynb
 src/model/test_mlflow_load.py
+
+# Local verification / test scripts (personal use only, not part of the codebase)
+src/serve/testing_verify_serving.py
+src/serve/testing_predict_from_rds.py
+data/rds_predictions.csv
 
 # Model artifacts (tracked by DVC pipeline output; do not track in Git)
 models/
