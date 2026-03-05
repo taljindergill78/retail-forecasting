@@ -226,7 +226,7 @@ High-level planning and rationale (e.g. why we use **MLflow Model Registry as th
 - **Phase B (SageMaker):** Run and verify each SageMaker job (split, features, train, evaluate), then define a SageMaker Pipeline. Registration/approval is handled in **MLflow Model Registry** via Staging/Production stages (no separate SageMaker Model Registry).
 - **Model registry and approval:** Use **MLflow Model Registry** as the single source of truth. New versions go to **Staging** after manual review; **Production** is the one and only version that downstream systems are allowed to use.
 - **Serving (Phase C):** FastAPI (or similar) in Docker, loading only the MLflow **Production** model (`models:/RetailSalesForecaster/Production`).
-- **Deployment (Phase D):** Deploy the serving API on EKS.
+- **Deployment (Phase D):** Deploy the serving API on **ECS Fargate** behind an ALB.
 - **CI/CD (Phase E):** Automate tests and deployment when new models are approved.
 - **Monitoring and batch inference:** Add monitoring, alarms, and optional batch inference (later phases).
 
