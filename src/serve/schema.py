@@ -1,5 +1,5 @@
 """
-Phase C — Step 2: Strict Pydantic input/output schema for the serving API.
+Strict Pydantic input/output schema for the serving API.
 
 Separating schema from app.py keeps routing logic clean.
 These models are the single source of truth for what /predict accepts and returns.

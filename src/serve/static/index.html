@@ -15,54 +15,30 @@
       padding: 2rem 1rem 4rem;
     }
 
-    .page-header {
-      text-align: center;
-      margin-bottom: 2.5rem;
-    }
+    .page-header { text-align: center; margin-bottom: 2.5rem; }
     .page-header h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #f8fafc;
-      letter-spacing: -0.5px;
+      font-size: 2rem; font-weight: 700;
+      color: #f8fafc; letter-spacing: -0.5px;
     }
-    .page-header p {
-      margin-top: 0.4rem;
-      color: #64748b;
-      font-size: 0.9rem;
-    }
+    .page-header p { margin-top: 0.4rem; color: #64748b; font-size: 0.9rem; }
     .badge {
-      display: inline-block;
-      background: #1e3a5f;
-      color: #60a5fa;
-      border: 1px solid #2563eb44;
-      border-radius: 999px;
-      padding: 0.15rem 0.75rem;
-      font-size: 0.75rem;
-      font-weight: 600;
-      margin-top: 0.5rem;
-      letter-spacing: 0.05em;
+      display: inline-block; background: #1e3a5f; color: #60a5fa;
+      border: 1px solid #2563eb44; border-radius: 999px;
+      padding: 0.15rem 0.75rem; font-size: 0.75rem; font-weight: 600;
+      margin-top: 0.5rem; letter-spacing: 0.05em;
     }
 
     .container { max-width: 900px; margin: 0 auto; }
 
     /* ── Cards ── */
     .card {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 1.25rem;
+      background: #1e293b; border: 1px solid #334155;
+      border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem;
     }
     .card-title {
-      font-size: 0.8rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #60a5fa;
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: #60a5fa; margin-bottom: 1rem;
+      display: flex; align-items: center; gap: 0.5rem;
     }
     .card-title span.icon { font-size: 1rem; }
 
@@ -72,72 +48,54 @@
       grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
       gap: 1rem;
     }
+    .field-grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 1rem;
+    }
 
     /* ── Fields ── */
     .field { display: flex; flex-direction: column; gap: 0.3rem; }
     .field label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: #94a3b8;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      font-size: 0.75rem; font-weight: 600; color: #94a3b8;
+      text-transform: uppercase; letter-spacing: 0.05em;
     }
     .field label .req { color: #f87171; margin-left: 2px; }
-    .field label .opt { color: #475569; font-weight: 400; font-size: 0.7rem; text-transform: none; letter-spacing: 0; }
+    .field label .auto {
+      color: #22d3ee; font-weight: 400; font-size: 0.68rem;
+      text-transform: none; letter-spacing: 0; margin-left: 4px;
+    }
     .field input, .field select {
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 6px;
-      color: #e2e8f0;
-      padding: 0.45rem 0.6rem;
-      font-size: 0.875rem;
-      transition: border-color 0.15s;
-      width: 100%;
+      background: #0f172a; border: 1px solid #334155;
+      border-radius: 6px; color: #e2e8f0;
+      padding: 0.45rem 0.6rem; font-size: 0.875rem;
+      transition: border-color 0.15s; width: 100%;
     }
     .field input:focus, .field select:focus {
-      outline: none;
-      border-color: #3b82f6;
+      outline: none; border-color: #3b82f6;
     }
     .field input::placeholder { color: #475569; }
-    .field input.optional { border-color: #1e3a5f; }
-    .field input.optional:focus { border-color: #3b82f6; }
 
-    /* ── Collapsible optional section ── */
-    .toggle-btn {
-      background: none;
-      border: 1px dashed #334155;
-      border-radius: 8px;
-      color: #64748b;
-      cursor: pointer;
-      font-size: 0.8rem;
-      padding: 0.6rem 1rem;
-      width: 100%;
-      text-align: left;
-      margin-bottom: 1rem;
-      transition: border-color 0.15s, color 0.15s;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    /* Read-only / auto-derived fields */
+    .field input[readonly] {
+      background: #0c1628; color: #4b6a9b;
+      border-color: #1e3a5f; cursor: default;
     }
-    .toggle-btn:hover { border-color: #3b82f6; color: #93c5fd; }
-    .toggle-arrow { transition: transform 0.2s; }
-    .toggle-arrow.open { transform: rotate(180deg); }
-    .optional-section { display: none; }
-    .optional-section.open { display: block; }
+    .field input[type="date"] { color-scheme: dark; }
+
+    /* Date hint */
+    .date-hint {
+      font-size: 0.7rem; color: #475569; margin-top: 0.5rem; line-height: 1.4;
+    }
+    .date-hint strong { color: #64748b; }
 
     /* ── Submit button ── */
     .submit-wrap { text-align: center; margin-top: 1.5rem; }
     .btn-predict {
       background: linear-gradient(135deg, #2563eb, #1d4ed8);
-      border: none;
-      border-radius: 8px;
-      color: #fff;
-      cursor: pointer;
-      font-size: 1rem;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      padding: 0.85rem 3rem;
-      transition: opacity 0.15s, transform 0.1s;
+      border: none; border-radius: 8px; color: #fff; cursor: pointer;
+      font-size: 1rem; font-weight: 700; letter-spacing: 0.02em;
+      padding: 0.85rem 3rem; transition: opacity 0.15s, transform 0.1s;
     }
     .btn-predict:hover { opacity: 0.9; transform: translateY(-1px); }
     .btn-predict:active { transform: translateY(0); }
@@ -145,59 +103,63 @@
 
     /* ── Result ── */
     #result-box {
-      display: none;
-      margin-top: 1.5rem;
-      border-radius: 12px;
-      padding: 1.75rem 2rem;
-      text-align: center;
-      border: 1px solid;
+      display: none; margin-top: 1.5rem; border-radius: 12px;
+      padding: 1.75rem 2rem; text-align: center; border: 1px solid;
     }
-    #result-box.success {
-      background: #052e16;
-      border-color: #166534;
-    }
-    #result-box.error {
-      background: #2d0a0a;
-      border-color: #7f1d1d;
-    }
+    #result-box.success { background: #052e16; border-color: #166534; }
+    #result-box.error   { background: #2d0a0a; border-color: #7f1d1d; }
     #result-label {
-      font-size: 0.8rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: #4ade80;
-      margin-bottom: 0.5rem;
+      font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.1em; color: #4ade80; margin-bottom: 0.5rem;
     }
     #result-box.error #result-label { color: #f87171; }
-    #result-value {
-      font-size: 2.5rem;
-      font-weight: 800;
-      color: #f0fdf4;
-    }
+    #result-value { font-size: 2.5rem; font-weight: 800; color: #f0fdf4; }
     #result-box.error #result-value {
-      font-size: 0.9rem;
-      color: #fca5a5;
-      word-break: break-word;
-      text-align: left;
+      font-size: 0.9rem; color: #fca5a5;
+      word-break: break-word; text-align: left;
     }
-    #result-sub {
-      font-size: 0.8rem;
-      color: #4ade8088;
-      margin-top: 0.3rem;
-    }
+    #result-sub { font-size: 0.8rem; color: #4ade8088; margin-top: 0.3rem; }
 
     /* ── Spinner ── */
     .spinner {
-      display: inline-block;
-      width: 18px; height: 18px;
-      border: 3px solid #ffffff44;
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-      vertical-align: middle;
-      margin-right: 0.5rem;
+      display: inline-block; width: 18px; height: 18px;
+      border: 3px solid #ffffff44; border-top-color: #fff;
+      border-radius: 50%; animation: spin 0.6s linear infinite;
+      vertical-align: middle; margin-right: 0.5rem;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Collapsible optional section ── */
+    .toggle-btn {
+      background: none; border: 1px dashed #334155; border-radius: 8px;
+      color: #64748b; cursor: pointer; font-size: 0.8rem;
+      padding: 0.6rem 1rem; width: 100%; text-align: left;
+      margin-bottom: 1rem; transition: border-color 0.15s, color 0.15s;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .toggle-btn:hover { border-color: #3b82f6; color: #93c5fd; }
+    .toggle-arrow { transition: transform 0.2s; }
+    .toggle-arrow.open { transform: rotate(180deg); }
+    .optional-section { display: none; }
+    .optional-section.open { display: block; }
+
+    /* Optional field style */
+    .field input.optional { border-color: #1e3a5f; }
+    .field input.optional:focus { border-color: #3b82f6; }
+    .field label .opt {
+      color: #475569; font-weight: 400; font-size: 0.7rem;
+      text-transform: none; letter-spacing: 0;
+    }
+
+    /* Sub-section label inside cards */
+    .section-label {
+      font-size: 0.72rem; color: #475569; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 0.5rem;
+    }
+
+    /* ── Validation hint shown on bad input ── */
+    .field input:invalid { border-color: #f87171; }
   </style>
 </head>
 <body>
@@ -217,48 +179,95 @@
     <div class="card">
       <div class="card-title"><span class="icon">🏬</span> Store &amp; Department</div>
       <div class="field-grid">
+
         <div class="field">
           <label>Store ID <span class="req">*</span></label>
-          <input type="number" name="store_id" value="1" min="1" max="45" required />
+          <!--
+            min=1 max=45: 45 stores in the dataset.
+            step=1 enforces integer-only in the browser spinner.
+            onkeydown blocks decimal point, minus, and 'e' keys so the user
+            cannot type a float or negative value at all.
+          -->
+          <input type="number" name="store_id" value="1"
+                 min="1" max="45" step="1" required
+                 onkeydown="return blockNonInteger(event)"
+                 title="Whole number between 1 and 45" />
         </div>
+
         <div class="field">
           <label>Department ID <span class="req">*</span></label>
-          <input type="number" name="dept_id" value="1" min="1" required />
+          <input type="number" name="dept_id" value="1"
+                 min="1" max="99" step="1" required
+                 onkeydown="return blockNonInteger(event)"
+                 title="Whole number, e.g. 1–99" />
         </div>
+
         <div class="field">
           <label>Store Type <span class="req">*</span></label>
           <select name="store_type" required>
-            <option value="A" selected>A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
+            <option value="A" selected>A — Large</option>
+            <option value="B">B — Medium</option>
+            <option value="C">C — Small</option>
           </select>
         </div>
+
         <div class="field">
           <label>Store Size (sq ft) <span class="req">*</span></label>
-          <input type="number" name="store_size" value="151315" min="1" required />
+          <!--
+            step=1 + onkeydown: only whole numbers, no letters or symbols.
+            Typical range: 34,875 – 219,622 sq ft in the dataset.
+          -->
+          <input type="number" name="store_size" value="151315"
+                 min="1" step="1" required
+                 onkeydown="return blockNonInteger(event)"
+                 title="Floor area in square feet (whole number)" />
         </div>
+
       </div>
     </div>
 
-    <!-- 2. Calendar -->
+    <!-- 2. Calendar — single date picker, derived fields are read-only -->
     <div class="card">
       <div class="card-title"><span class="icon">📅</span> Calendar</div>
-      <div class="field-grid">
+
+      <div class="field-grid" style="margin-bottom:0.85rem;">
+        <div class="field" style="grid-column: span 2;">
+          <label>Week Date <span class="req">*</span></label>
+          <!--
+            The user picks a date. All four calendar features (year, month,
+            week_of_year, day_of_year) are derived automatically from this date
+            and shown as read-only fields below — exactly as the feature
+            engineering pipeline computes them.
+          -->
+          <input type="date" id="weekDatePicker" value="2010-02-05"
+                 required oninput="updateCalendar(this.value)" />
+          <p class="date-hint">
+            <strong>Note:</strong> The model was trained on data from
+            <strong>2010–2011</strong> (test split: 2012).
+            For dates outside this range the <em>year</em> feature
+            is clamped to the training boundary — predictions are still
+            generated but are less precise for future years.
+          </p>
+        </div>
+      </div>
+
+      <!-- Derived read-only calendar fields -->
+      <div class="field-grid-2">
         <div class="field">
-          <label>Year <span class="req">*</span></label>
-          <input type="number" name="year" value="2010" required />
+          <label>Year <span class="auto">auto</span></label>
+          <input type="number" name="year" id="f_year" readonly tabindex="-1" />
         </div>
         <div class="field">
-          <label>Month <span class="req">*</span></label>
-          <input type="number" name="month" value="2" min="1" max="12" required />
+          <label>Month <span class="auto">auto</span></label>
+          <input type="number" name="month" id="f_month" readonly tabindex="-1" />
         </div>
         <div class="field">
-          <label>Week of Year <span class="req">*</span></label>
-          <input type="number" name="week_of_year" value="5" min="1" max="53" required />
+          <label>Week of Year <span class="auto">auto</span></label>
+          <input type="number" name="week_of_year" id="f_week_of_year" readonly tabindex="-1" />
         </div>
         <div class="field">
-          <label>Day of Year <span class="req">*</span></label>
-          <input type="number" name="day_of_year" value="36" min="1" max="366" required />
+          <label>Day of Year <span class="auto">auto</span></label>
+          <input type="number" name="day_of_year" id="f_day_of_year" readonly tabindex="-1" />
         </div>
       </div>
     </div>
@@ -267,13 +276,15 @@
     <div class="card">
       <div class="card-title"><span class="icon">🎉</span> Holiday Flags</div>
       <div class="field-grid">
+
         <div class="field">
           <label>Is Holiday Week <span class="req">*</span></label>
           <select name="isholiday" required>
-            <option value="false" selected>No (false)</option>
-            <option value="true">Yes (true)</option>
+            <option value="false" selected>No</option>
+            <option value="true">Yes</option>
           </select>
         </div>
+
         <div class="field">
           <label>Prev Week Holiday <span class="req">*</span></label>
           <select name="is_holiday_prev1" required>
@@ -281,6 +292,7 @@
             <option value="1">1 — Yes</option>
           </select>
         </div>
+
         <div class="field">
           <label>Next Week Holiday <span class="req">*</span></label>
           <select name="is_holiday_next1" required>
@@ -288,6 +300,7 @@
             <option value="1">1 — Yes</option>
           </select>
         </div>
+
         <div class="field">
           <label>Within 7d After Holiday <span class="req">*</span></label>
           <select name="within_7days_after_holiday" required>
@@ -295,6 +308,7 @@
             <option value="1">1 — Yes</option>
           </select>
         </div>
+
         <div class="field">
           <label>Within 7d Before Holiday <span class="req">*</span></label>
           <select name="within_7days_before_holiday" required>
@@ -302,6 +316,7 @@
             <option value="1">1 — Yes</option>
           </select>
         </div>
+
       </div>
     </div>
 
@@ -309,130 +324,179 @@
     <div class="card">
       <div class="card-title"><span class="icon">📊</span> Economic Indicators</div>
       <div class="field-grid">
+
         <div class="field">
           <label>Temperature (°F) <span class="req">*</span></label>
-          <input type="number" step="0.01" name="temperature" value="42.31" required />
+          <!-- Can be below 0 in winter — no min restriction -->
+          <input type="number" step="0.01" name="temperature"
+                 value="42.31" required
+                 title="Average regional temperature in °F (decimals allowed)" />
         </div>
+
         <div class="field">
-          <label>Fuel Price (USD) <span class="req">*</span></label>
-          <input type="number" step="0.001" name="fuel_price" value="2.572" required />
+          <label>Fuel Price (USD/gal) <span class="req">*</span></label>
+          <input type="number" step="0.001" name="fuel_price"
+                 value="2.572" min="0.001" required
+                 title="Regional fuel price, e.g. 2.572" />
         </div>
+
         <div class="field">
           <label>CPI <span class="req">*</span></label>
-          <input type="number" step="0.01" name="cpi" value="211.09" required />
+          <input type="number" step="0.0001" name="cpi"
+                 value="211.0963" min="0.0001" required
+                 title="Consumer Price Index, e.g. 211.09" />
         </div>
+
         <div class="field">
           <label>Unemployment (%) <span class="req">*</span></label>
-          <input type="number" step="0.001" name="unemployment" value="8.106" required />
+          <input type="number" step="0.001" name="unemployment"
+                 value="8.106" min="0" max="100" required
+                 title="Regional unemployment rate, 0–100" />
         </div>
+
       </div>
     </div>
 
-    <!-- 5. Markdowns -->
+    <!-- 5. Promotional Markdowns -->
     <div class="card">
       <div class="card-title"><span class="icon">🏷️</span> Promotional Markdowns</div>
-      <div class="field-grid">
+
+      <div class="field-grid" style="margin-bottom:1rem;">
         <div class="field">
           <label>Markdown 1 <span class="req">*</span></label>
-          <input type="number" step="0.01" name="markdown1" value="0" required />
+          <input type="number" step="0.01" name="markdown1"
+                 value="0" min="0" required
+                 oninput="updateMarkdownTotals()"
+                 title="Promotional markdown amount (≥ 0)" />
         </div>
         <div class="field">
           <label>Markdown 2 <span class="req">*</span></label>
-          <input type="number" step="0.01" name="markdown2" value="0" required />
+          <input type="number" step="0.01" name="markdown2"
+                 value="0" min="0" required
+                 oninput="updateMarkdownTotals()" />
         </div>
         <div class="field">
           <label>Markdown 3 <span class="req">*</span></label>
-          <input type="number" step="0.01" name="markdown3" value="0" required />
+          <input type="number" step="0.01" name="markdown3"
+                 value="0" min="0" required
+                 oninput="updateMarkdownTotals()" />
         </div>
         <div class="field">
           <label>Markdown 4 <span class="req">*</span></label>
-          <input type="number" step="0.01" name="markdown4" value="0" required />
+          <input type="number" step="0.01" name="markdown4"
+                 value="0" min="0" required
+                 oninput="updateMarkdownTotals()" />
         </div>
         <div class="field">
           <label>Markdown 5 <span class="req">*</span></label>
-          <input type="number" step="0.01" name="markdown5" value="0" required />
+          <input type="number" step="0.01" name="markdown5"
+                 value="0" min="0" required
+                 oninput="updateMarkdownTotals()" />
+        </div>
+      </div>
+
+      <!-- Auto-derived totals — read-only -->
+      <div class="field-grid-2">
+        <div class="field">
+          <label>Markdown Total <span class="auto">auto</span></label>
+          <input type="number" name="markdown_total" id="f_markdown_total"
+                 readonly tabindex="-1" value="0" />
         </div>
         <div class="field">
-          <label>Markdown Total <span class="req">*</span></label>
-          <input type="number" step="0.01" name="markdown_total" value="0" required />
-        </div>
-        <div class="field">
-          <label>Has Markdown <span class="req">*</span></label>
-          <select name="has_markdown" required>
+          <label>Has Markdown <span class="auto">auto</span></label>
+          <!--
+            Displayed as a select so it looks consistent with the other flags,
+            but it is disabled (not editable). The hidden input carries the value.
+          -->
+          <select id="f_has_markdown_display" disabled>
             <option value="0" selected>0 — No</option>
             <option value="1">1 — Yes</option>
           </select>
+          <input type="hidden" name="has_markdown" id="f_has_markdown" value="0" />
         </div>
       </div>
+
     </div>
 
-    <!-- 6. Optional: Lag & Rolling Features -->
+    <!-- 6. Sales History — optional, but strongly recommended for future years -->
     <div class="card">
-      <div class="card-title"><span class="icon">🔁</span> Lag &amp; Rolling Features <span style="color:#475569;font-size:0.7rem;font-weight:400;text-transform:none;letter-spacing:0;">&nbsp;— optional</span></div>
+      <div class="card-title">
+        <span class="icon">🔁</span> Sales History (Lag &amp; Rolling Features)
+        <span style="color:#475569;font-size:0.7rem;font-weight:400;text-transform:none;letter-spacing:0;">&nbsp;— optional but improves accuracy</span>
+      </div>
 
-      <button type="button" class="toggle-btn" id="lagToggle" onclick="toggleSection('lagSection', 'lagArrow')">
-        <span>Show lag &amp; rolling features (leave blank if unavailable)</span>
+      <button type="button" class="toggle-btn" id="lagToggle"
+              onclick="toggleSection('lagSection','lagArrow')">
+        <span>Show historical sales inputs</span>
         <span class="toggle-arrow" id="lagArrow">▼</span>
       </button>
 
       <div class="optional-section" id="lagSection">
 
-        <p style="font-size:0.75rem;color:#64748b;margin-bottom:1rem;">
-          These are computed from historical data. Leave blank (<code style="color:#94a3b8">null</code>) for stores/departments with no prior history.
-        </p>
+        <div style="background:#0c1a2e;border:1px solid #1e3a5f;border-radius:8px;
+                    padding:0.9rem 1rem;margin-bottom:1.25rem;font-size:0.78rem;
+                    color:#7cb3f0;line-height:1.6;">
+          <strong style="color:#93c5fd;">Why these matter:</strong>
+          Lag features are the model's strongest signals — last week's sales
+          (<em>Lag 1</em>) alone drives ~60–70% of prediction accuracy.
+          Without them the model returns a store/dept average.
+          <strong style="color:#93c5fd;">For future years (e.g. 2025):</strong>
+          filling in real recent sales makes predictions meaningful
+          even though the model was only trained up to 2012.
+          Leave blank if no history is available (new store or department).
+        </div>
 
         <!-- Sales lags -->
-        <div style="margin-bottom:0.5rem;font-size:0.72rem;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Sales lags</div>
+        <div class="section-label">Sales Lags</div>
         <div class="field-grid" style="margin-bottom:1rem;">
-          <div class="field"><label>Lag 1 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="lag_1" value="24924.5" class="optional" placeholder="null" /></div>
-          <div class="field"><label>Lag 2 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="lag_2" value="46039.49" class="optional" placeholder="null" /></div>
-          <div class="field"><label>Lag 4 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="lag_4" value="41595.55" class="optional" placeholder="null" /></div>
-          <div class="field"><label>Lag 52 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="lag_52" class="optional" placeholder="null" /></div>
+          <div class="field">
+            <label>Lag 1 <span class="opt">(optional)</span></label>
+            <input type="number" step="0.01" name="lag_1" min="0"
+                   class="optional" placeholder="last week's sales" />
+          </div>
+          <div class="field">
+            <label>Lag 2 <span class="opt">(optional)</span></label>
+            <input type="number" step="0.01" name="lag_2" min="0"
+                   class="optional" placeholder="2 weeks ago" />
+          </div>
+          <div class="field">
+            <label>Lag 4 <span class="opt">(optional)</span></label>
+            <input type="number" step="0.01" name="lag_4" min="0"
+                   class="optional" placeholder="4 weeks ago" />
+          </div>
+          <div class="field">
+            <label>Lag 52 <span class="opt">(optional)</span></label>
+            <input type="number" step="0.01" name="lag_52" min="0"
+                   class="optional" placeholder="same week last year" />
+          </div>
         </div>
 
         <!-- Rolling stats -->
-        <div style="margin-bottom:0.5rem;font-size:0.72rem;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Sales rolling statistics</div>
-        <div class="field-grid" style="margin-bottom:1rem;">
-          <div class="field"><label>Rolling Mean 4 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="rolling_mean_4" value="40000" class="optional" placeholder="null" /></div>
-          <div class="field"><label>Rolling Mean 8 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="rolling_mean_8" value="38000" class="optional" placeholder="null" /></div>
-          <div class="field"><label>Rolling Std 4 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="rolling_std_4" value="3000" class="optional" placeholder="null" /></div>
-          <div class="field"><label>Rolling Std 8 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="rolling_std_8" value="3500" class="optional" placeholder="null" /></div>
-        </div>
-
-        <!-- Markdown lags -->
-        <div style="margin-bottom:0.5rem;font-size:0.72rem;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Markdown total lags</div>
-        <div class="field-grid" style="margin-bottom:1rem;">
-          <div class="field"><label>MD Total Lag 1 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="markdown_total_lag_1" class="optional" placeholder="null" /></div>
-          <div class="field"><label>MD Total Lag 2 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="markdown_total_lag_2" class="optional" placeholder="null" /></div>
-          <div class="field"><label>MD Total Lag 4 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="markdown_total_lag_4" class="optional" placeholder="null" /></div>
-          <div class="field"><label>MD Total Lag 52 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="markdown_total_lag_52" class="optional" placeholder="null" /></div>
-          <div class="field"><label>MD Rolling Mean 4 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="markdown_total_rolling_mean_4" class="optional" placeholder="null" /></div>
-          <div class="field"><label>MD Rolling Mean 8 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="markdown_total_rolling_mean_8" class="optional" placeholder="null" /></div>
-        </div>
-
-        <!-- Fuel price lags -->
-        <div style="margin-bottom:0.5rem;font-size:0.72rem;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Fuel price lags</div>
-        <div class="field-grid" style="margin-bottom:1rem;">
-          <div class="field"><label>Fuel Lag 1 <span class="opt">(optional)</span></label><input type="number" step="0.001" name="fuel_price_lag_1" class="optional" placeholder="null" /></div>
-          <div class="field"><label>Fuel Lag 2 <span class="opt">(optional)</span></label><input type="number" step="0.001" name="fuel_price_lag_2" class="optional" placeholder="null" /></div>
-          <div class="field"><label>Fuel Lag 4 <span class="opt">(optional)</span></label><input type="number" step="0.001" name="fuel_price_lag_4" class="optional" placeholder="null" /></div>
-          <div class="field"><label>Fuel Lag 52 <span class="opt">(optional)</span></label><input type="number" step="0.001" name="fuel_price_lag_52" class="optional" placeholder="null" /></div>
-          <div class="field"><label>Fuel Rolling Mean 4 <span class="opt">(optional)</span></label><input type="number" step="0.001" name="fuel_price_rolling_mean_4" class="optional" placeholder="null" /></div>
-          <div class="field"><label>Fuel Rolling Mean 8 <span class="opt">(optional)</span></label><input type="number" step="0.001" name="fuel_price_rolling_mean_8" class="optional" placeholder="null" /></div>
-        </div>
-
-        <!-- Temperature lags -->
-        <div style="margin-bottom:0.5rem;font-size:0.72rem;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Temperature lags</div>
+        <div class="section-label">Rolling Averages</div>
         <div class="field-grid">
-          <div class="field"><label>Temp Lag 1 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="temperature_lag_1" class="optional" placeholder="null" /></div>
-          <div class="field"><label>Temp Lag 2 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="temperature_lag_2" class="optional" placeholder="null" /></div>
-          <div class="field"><label>Temp Lag 4 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="temperature_lag_4" class="optional" placeholder="null" /></div>
-          <div class="field"><label>Temp Lag 52 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="temperature_lag_52" class="optional" placeholder="null" /></div>
-          <div class="field"><label>Temp Rolling Mean 4 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="temperature_rolling_mean_4" class="optional" placeholder="null" /></div>
-          <div class="field"><label>Temp Rolling Mean 8 <span class="opt">(optional)</span></label><input type="number" step="0.01" name="temperature_rolling_mean_8" class="optional" placeholder="null" /></div>
+          <div class="field">
+            <label>Rolling Mean 4w <span class="opt">(optional)</span></label>
+            <input type="number" step="0.01" name="rolling_mean_4" min="0"
+                   class="optional" placeholder="avg last 4 weeks" />
+          </div>
+          <div class="field">
+            <label>Rolling Mean 8w <span class="opt">(optional)</span></label>
+            <input type="number" step="0.01" name="rolling_mean_8" min="0"
+                   class="optional" placeholder="avg last 8 weeks" />
+          </div>
+          <div class="field">
+            <label>Rolling Std 4w <span class="opt">(optional)</span></label>
+            <input type="number" step="0.01" name="rolling_std_4" min="0"
+                   class="optional" placeholder="std last 4 weeks" />
+          </div>
+          <div class="field">
+            <label>Rolling Std 8w <span class="opt">(optional)</span></label>
+            <input type="number" step="0.01" name="rolling_std_8" min="0"
+                   class="optional" placeholder="std last 8 weeks" />
+          </div>
         </div>
 
-      </div>
+      </div><!-- /lagSection -->
     </div>
 
     <!-- Submit -->
@@ -452,34 +516,117 @@
 </div><!-- /container -->
 
 <script>
+  /* ─────────────────────────────────────────────────────────────────────────
+     COLLAPSIBLE SECTION TOGGLE
+  ───────────────────────────────────────────────────────────────────────── */
   function toggleSection(sectionId, arrowId) {
-    const section = document.getElementById(sectionId);
-    const arrow = document.getElementById(arrowId);
-    section.classList.toggle('open');
-    arrow.classList.toggle('open');
+    document.getElementById(sectionId).classList.toggle('open');
+    document.getElementById(arrowId).classList.toggle('open');
   }
 
-  // String fields — must be kept as strings, not parsed as numbers
-  const STRING_FIELDS = new Set(['store_type']);
+  /* ─────────────────────────────────────────────────────────────────────────
+     BLOCK NON-INTEGER KEYSTROKES
+     Called via onkeydown on Store ID, Dept ID, and Store Size.
+     Allows: digits 0–9, Backspace, Delete, Arrow keys, Tab, Enter.
+     Blocks: decimal point (46 / 190), minus (45 / 189), letter 'e' (69).
+  ───────────────────────────────────────────────────────────────────────── */
+  function blockNonInteger(e) {
+    const allowed = [
+      'Backspace','Delete','ArrowLeft','ArrowRight','ArrowUp','ArrowDown',
+      'Tab','Enter','Home','End'
+    ];
+    if (allowed.includes(e.key)) return true;
+    if (e.key === '.' || e.key === ',' || e.key === '-' || e.key.toLowerCase() === 'e') {
+      e.preventDefault();
+      return false;
+    }
+    if (!/^\d$/.test(e.key)) {
+      e.preventDefault();
+      return false;
+    }
+    return true;
+  }
 
-  // Integer fields
+  /* ─────────────────────────────────────────────────────────────────────────
+     CALENDAR — derive all four fields from the date picker
+  ───────────────────────────────────────────────────────────────────────── */
+
+  /** ISO 8601 week number (same algorithm used by Python's date.isocalendar()) */
+  function isoWeekNumber(date) {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    // Move to the Thursday in the week (ISO week starts on Monday)
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  }
+
+  /** Day of year (1-based, matches Python's date.timetuple().tm_yday) */
+  function dayOfYear(date) {
+    const start = new Date(date.getFullYear(), 0, 0);
+    const diff  = date - start + (start.getTimezoneOffset() - date.getTimezoneOffset()) * 60000;
+    return Math.floor(diff / 86400000);
+  }
+
+  function updateCalendar(dateStr) {
+    if (!dateStr) return;
+    // Use noon local time to avoid DST boundary issues
+    const d = new Date(dateStr + 'T12:00:00');
+    if (isNaN(d)) return;
+
+    document.getElementById('f_year').value        = d.getFullYear();
+    document.getElementById('f_month').value       = d.getMonth() + 1;
+    document.getElementById('f_week_of_year').value = isoWeekNumber(d);
+    document.getElementById('f_day_of_year').value = dayOfYear(d);
+  }
+
+  // Populate on page load
+  updateCalendar(document.getElementById('weekDatePicker').value);
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     MARKDOWN TOTALS — auto-calculate whenever any markdown1–5 changes
+  ───────────────────────────────────────────────────────────────────────── */
+  function updateMarkdownTotals() {
+    const names  = ['markdown1','markdown2','markdown3','markdown4','markdown5'];
+    const total  = names.reduce((sum, n) => {
+      const v = parseFloat(document.querySelector(`[name="${n}"]`).value);
+      return sum + (isNaN(v) ? 0 : v);
+    }, 0);
+
+    document.getElementById('f_markdown_total').value = total.toFixed(2);
+
+    const hasMarkdown = total > 0 ? '1' : '0';
+    document.getElementById('f_has_markdown').value       = hasMarkdown;
+    document.getElementById('f_has_markdown_display').value = hasMarkdown;
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     PAYLOAD BUILDER
+     Reads the form, converts values to the correct types, and returns the
+     dict that POST /predict expects as a single row.
+
+     All 26 lag / rolling features are NOT on the form — they are simply
+     omitted here, and the Pydantic schema defaults them to null (None).
+     The model handles null features gracefully via its NaN paths in the trees.
+  ───────────────────────────────────────────────────────────────────────── */
   const INT_FIELDS = new Set([
-    'store_id', 'dept_id', 'store_size',
-    'week_of_year', 'month', 'year', 'day_of_year',
-    'is_holiday_prev1', 'is_holiday_next1',
-    'within_7days_after_holiday', 'within_7days_before_holiday',
+    'store_id','dept_id','store_size',
+    'year','month','week_of_year','day_of_year',
+    'is_holiday_prev1','is_holiday_next1',
+    'within_7days_after_holiday','within_7days_before_holiday',
     'has_markdown'
   ]);
 
   function buildPayload(form) {
-    const data = new FormData(form);
+    const data    = new FormData(form);
     const payload = {};
+
     for (const [name, rawValue] of data.entries()) {
       const v = rawValue.trim();
+
       if (name === 'isholiday') {
         payload[name] = v === 'true';
-      } else if (STRING_FIELDS.has(name)) {
-        payload[name] = v === '' ? null : v;           // keep as string
+      } else if (name === 'store_type') {
+        payload[name] = v;                          // keep as string
       } else if (INT_FIELDS.has(name)) {
         payload[name] = v === '' ? null : parseInt(v, 10);
       } else {
@@ -489,16 +636,19 @@
     return payload;
   }
 
+  /* ─────────────────────────────────────────────────────────────────────────
+     FORM SUBMIT
+  ───────────────────────────────────────────────────────────────────────── */
   document.getElementById('predictForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const btn = document.getElementById('submitBtn');
-    const resultBox = document.getElementById('result-box');
+    const btn         = document.getElementById('submitBtn');
+    const resultBox   = document.getElementById('result-box');
     const resultLabel = document.getElementById('result-label');
     const resultValue = document.getElementById('result-value');
-    const resultSub = document.getElementById('result-sub');
+    const resultSub   = document.getElementById('result-sub');
 
-    btn.disabled = true;
+    btn.disabled  = true;
     btn.innerHTML = '<span class="spinner"></span>Predicting…';
     resultBox.style.display = 'none';
 
@@ -506,43 +656,41 @@
 
     try {
       const response = await fetch('/predict', {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rows: [payload] })
+        body:    JSON.stringify({ rows: [payload] })
       });
 
       const json = await response.json();
 
       if (response.ok) {
         const pred = json.predictions[0];
-        resultBox.className = 'success';
-        resultLabel.textContent = 'Predicted Weekly Sales';
-        resultValue.textContent = new Intl.NumberFormat('en-US', {
+        resultBox.className      = 'success';
+        resultLabel.textContent  = 'Predicted Weekly Sales';
+        resultValue.textContent  = new Intl.NumberFormat('en-US', {
           style: 'currency', currency: 'USD', maximumFractionDigits: 2
         }).format(pred);
         resultSub.textContent =
           `Store ${payload.store_id} · Dept ${payload.dept_id} · ` +
           `Week ${payload.week_of_year}, ${payload.year}`;
       } else {
-        resultBox.className = 'error';
+        resultBox.className     = 'error';
         resultLabel.textContent = 'Prediction Error';
-        const detail = json.detail;
+        const detail            = json.detail;
         resultValue.textContent = typeof detail === 'string'
-          ? detail
-          : JSON.stringify(detail, null, 2);
-        resultSub.textContent = `HTTP ${response.status}`;
+          ? detail : JSON.stringify(detail, null, 2);
+        resultSub.textContent   = `HTTP ${response.status}`;
       }
     } catch (err) {
-      resultBox.className = 'error';
+      resultBox.className     = 'error';
       resultLabel.textContent = 'Network Error';
       resultValue.textContent = err.message || 'Could not reach the prediction API.';
-      resultSub.textContent = '';
+      resultSub.textContent   = '';
     }
 
     resultBox.style.display = 'block';
     resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-    btn.disabled = false;
+    btn.disabled  = false;
     btn.innerHTML = 'Predict Sales';
   });
 </script>
