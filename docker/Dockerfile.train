@@ -1,0 +1,53 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# docker/Dockerfile.train
+# Training image for SageMaker processing and training jobs.
+#
+# This is SEPARATE from docker/Dockerfile.serve (which runs the FastAPI app).
+# The training image is heavier — it includes sagemaker, matplotlib, seaborn,
+# psycopg2, etc. None of those are needed at serving time.
+#
+# Build (from project root):
+#   docker build -f docker/Dockerfile.train \
+#     --platform linux/amd64 \
+#     -t retail-sagemaker-pipeline:latest .
+#
+# Push to ECR:
+#   docker tag retail-sagemaker-pipeline:latest <account>.dkr.ecr.<region>.amazonaws.com/retail-sagemaker-pipeline:latest
+#   docker push <account>.dkr.ecr.<region>.amazonaws.com/retail-sagemaker-pipeline:latest
+# ──────────────────────────────────────────────────────────────────────────────
+
+# Python 3.11-slim: matches the SageMaker Python 3.11 managed runtime.
+FROM python:3.11-slim
+
+# Prevent Python from writing .pyc bytecode files to disk.
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Disable stdout/stderr buffering so logs appear in CloudWatch without delay.
+ENV PYTHONUNBUFFERED=1
+
+# SageMaker will run commands with this as the current directory,
+# so "params.yaml" and "src/" are available at relative paths.
+WORKDIR /opt/ml/code
+
+# Copy dependency list first — Docker caches this layer.
+# If requirements.txt is unchanged, pip does not re-run on rebuilds.
+COPY requirements.txt .
+
+# Install system libs needed by some Python packages (e.g. LightGBM needs libgomp.so.1)
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends libgomp1 \
+ && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies. --no-cache-dir keeps the image smaller.
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy source code and pipeline config.
+COPY src ./src
+COPY params.yaml .
+
+# If split or other scripts need SQL files, uncomment:
+# COPY sql ./sql
+
+# Default command: run Python. SageMaker overrides with e.g. "python -m src.model.train".
+ENTRYPOINT ["python"]
+CMD ["-m", "src.model.train"]

@@ -1,4 +1,6 @@
+import logging
 import os
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Set
@@ -6,13 +8,38 @@ from typing import Set
 import mlflow
 import mlflow.pyfunc
 import pandas as pd
+import structlog
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 
 from src.config import get_mlflow_tracking_uri
 from src.serve.schema import PredictRequest, PredictResponse
 
+# ── Structured logging setup ──────────────────────────────────────────────────
+# Configures structlog to emit one JSON object per log call to stdout.
+# stdout is where ECS/CloudWatch looks for container logs — no file paths needed.
+# Each line has: timestamp (ISO), level, event, and any extra key=value fields.
+#
+# We also configure Python's root logger so MLflow's own log lines (which use
+# the stdlib logging module) are captured at WARNING level and don't clutter
+# the output with debug noise.
+logging.basicConfig(
+    format="%(message)s",
+    level=logging.WARNING,
+)
+structlog.configure(
+    processors=[
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.add_log_level,
+        structlog.processors.JSONRenderer(),
+    ],
+    wrapper_class=structlog.make_filtering_bound_logger(logging.INFO),
+    logger_factory=structlog.PrintLoggerFactory(),
+)
 
+log = structlog.get_logger()
+
+# ── Module-level model state ──────────────────────────────────────────────────
 DEFAULT_MODEL_NAME = "RetailSalesForecaster"
 DEFAULT_MODEL_STAGE = "Production"
 
@@ -109,6 +136,13 @@ def _resolve_feature_metadata() -> None:
         except Exception:
             pass
 
+    log.info(
+        "feature_metadata_resolved",
+        strategy="booster" if resolved else "mlflow_schema",
+        feature_count=len(_feature_order),
+        cat_cols=sorted(_cat_cols),
+    )
+
 
 def _load_model() -> None:
     """
@@ -123,11 +157,20 @@ def _load_model() -> None:
     model_uri_env = os.getenv("MLFLOW_MODEL_URI")
     model_uri = model_uri_env if model_uri_env else f"models:/{DEFAULT_MODEL_NAME}/{DEFAULT_MODEL_STAGE}"
 
+    log.info("model_loading", model_uri=model_uri, tracking_uri=tracking_uri)
+    t0 = time.time()
+
     try:
         _model = mlflow.pyfunc.load_model(model_uri)
         _model_uri = model_uri
+        log.info(
+            "model_loaded",
+            model_uri=_model_uri,
+            latency_ms=round((time.time() - t0) * 1000, 1),
+        )
         _resolve_feature_metadata()
     except Exception as exc:
+        log.error("model_load_failed", model_uri=model_uri, error=str(exc))
         raise RuntimeError(f"Failed to load MLflow model from '{model_uri}': {exc}") from exc
 
 
@@ -189,7 +232,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Retail Sales Forecaster API", version="0.2.0", lifespan=lifespan)
+app = FastAPI(title="Retail Sales Forecaster API", version="0.3.0", lifespan=lifespan)
 
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
@@ -210,6 +253,8 @@ def health() -> dict:
     Simple health endpoint for load balancers and smoke tests.
 
     Returns JSON with status and a flag indicating whether a model is loaded.
+    ALB health checks call this every 30 seconds; a task is only sent traffic
+    when this returns 200 with model_loaded=true.
     """
     return {
         "status": "ok",
@@ -221,7 +266,7 @@ def health() -> dict:
 @app.post("/predict", response_model=PredictResponse)
 def predict(request: PredictRequest) -> PredictResponse:
     """
-    Predict endpoint (Step 2 version).
+    Predict endpoint.
 
     Pipeline:
       1. Pydantic has already validated every field in request.rows.
@@ -231,14 +276,18 @@ def predict(request: PredictRequest) -> PredictResponse:
          which bypasses MLflow's schema enforcement layer (which cannot handle
          category dtype) while still using the correct predict logic for
          whatever model flavour is in Production (XGBoost, LightGBM, etc.).
+      5. Log the prediction result and latency as a structured JSON line.
     """
     if _model is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
+
+    t0 = time.time()
 
     try:
         df = pd.DataFrame([row.model_dump() for row in request.rows])
         df = _fix_dtypes(df)
     except Exception as exc:
+        log.error("request_parse_error", error=str(exc))
         raise HTTPException(status_code=400, detail=f"Could not build input DataFrame: {exc}") from exc
 
     try:
@@ -249,7 +298,18 @@ def predict(request: PredictRequest) -> PredictResponse:
         # data correctly for its own framework.
         predictions = _model._model_impl.predict(df)
     except Exception as exc:
+        log.error("prediction_error", error=str(exc))
         raise HTTPException(status_code=500, detail=f"Model prediction failed: {exc}") from exc
 
     preds_list = list(map(float, predictions.tolist())) if hasattr(predictions, "tolist") else list(predictions)
+
+    log.info(
+        "prediction_complete",
+        n_rows=len(request.rows),
+        store_id=request.rows[0].store_id if request.rows else None,
+        dept_id=request.rows[0].dept_id if request.rows else None,
+        predictions=[round(p, 2) for p in preds_list],
+        latency_ms=round((time.time() - t0) * 1000, 1),
+    )
+
     return PredictResponse(predictions=preds_list)

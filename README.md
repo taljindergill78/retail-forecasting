@@ -67,7 +67,7 @@ S3 (raw CSVs) → Glue ETL → RDS (retailds: fact_sales_weekly, dim_store, dim_
 | **Evaluate** | ✅ | `src/model/evaluate_models.py` — test metrics, report CSV, figures; can attach artifacts to the same MLflow run as train |
 | **Config** | ✅ | `src/config.py` — `load_params()`, `get_data_dir()`, `get_splits_dir()`, `get_models_dir()`, `get_reports_dir()`, `get_mlflow_tracking_uri()` for local and SageMaker |
 | **DVC** | ✅ | Full pipeline in `dvc.yaml`; remote S3 for cache (`dvc push` / `dvc pull`) |
-| **Docker** | ✅ | `Dockerfile` for SageMaker (Python 3.11, `WORKDIR /opt/ml/code`, `ENTRYPOINT ["python"]`) |
+| **Docker** | ✅ | `docker/Dockerfile.train` for SageMaker training (Python 3.11, `WORKDIR /opt/ml/code`, `ENTRYPOINT ["python"]`); `docker/Dockerfile.serve` for the FastAPI serving container |
 | **Phase B (SageMaker)** | In progress | Steps 1–6 done (IAM, VPC, S3, MLflow on EC2, image in ECR, scripts adapted for env-based paths). Step 7 (run SageMaker jobs one by one, then chain) is next. |
 
 ---
@@ -80,8 +80,8 @@ retail-forecasting/
 ├── params.yaml               # Pipeline parameters (split dates, feature config, model grids, evaluation)
 ├── dvc.yaml                  # DVC pipeline definition
 ├── dvc.lock                  # Locked versions of deps/params/outs
-├── requirements.txt          # Python dependencies
-├── Dockerfile                # Image for SageMaker (and future serving)
+├── requirements.txt          # Full dev / training dependencies
+├── requirements.serve.txt    # Lean serving-only dependencies (pinned xgboost==3.2.0)
 ├── .dvc/                     # DVC config (e.g. remote = s3)
 │
 ├── src/
@@ -100,6 +100,10 @@ retail-forecasting/
 │       ├── evaluate_models.py # Test evaluation and report
 │       ├── generate_all_test_predictions.py  # Optional: regenerate all test preds
 │       └── inspect_predictions.py            # Optional: inspect predictions by store/dept
+│
+├── docker/
+│   ├── Dockerfile.train      # SageMaker training image (python:3.11-slim, requirements.txt)
+│   └── Dockerfile.serve      # FastAPI serving image (python:3.11-slim, requirements.serve.txt)
 │
 ├── tools/
 │   ├── run_manifests.py      # Generate manifest JSONs from params

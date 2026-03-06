@@ -1,0 +1,78 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# docker/Dockerfile.serve
+# Serving image for the Retail Sales Forecaster FastAPI app.
+#
+# This is SEPARATE from docker/Dockerfile.train (which is used for SageMaker
+# training jobs). The serving image is leaner — no SageMaker SDK, no
+# visualisation libraries.
+#
+# Build (from project root):
+#   docker build -f docker/Dockerfile.serve -t retail-forecaster:local .
+#
+# Run locally (SSH tunnel to MLflow must be open on localhost:5000):
+#   docker run --rm -p 8080:8080 \
+#     -e MLFLOW_TRACKING_URI=http://host.docker.internal:5000 \
+#     retail-forecaster:local
+#
+# Verify:
+#   curl http://localhost:8080/health
+#   open http://localhost:8080
+# ──────────────────────────────────────────────────────────────────────────────
+
+# Python 3.11-slim: matches the SageMaker training environment (Python 3.11.14).
+# "slim" = Debian-based, no extras — keeps image small for faster ECR push/pull.
+FROM python:3.11-slim
+
+# Prevent Python from writing .pyc bytecode files to disk (keeps image clean).
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Disable stdout/stderr buffering so logs appear immediately in CloudWatch
+# and in the local terminal without delay.
+ENV PYTHONUNBUFFERED=1
+
+# Working directory inside the container.
+# /app is the standard convention for serving containers.
+# (The training image uses /opt/ml/code which is SageMaker's convention.)
+WORKDIR /app
+
+# ── 1. Install system libraries ───────────────────────────────────────────────
+# libgomp1: OpenMP shared library required by LightGBM on Linux.
+# Without it: OSError: libgomp.so.1: cannot open shared object file
+# Included even if XGBoost is the current Production model so the image
+# works if LightGBM is later promoted without rebuilding.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends libgomp1 \
+ && rm -rf /var/lib/apt/lists/*
+
+# ── 2. Install Python dependencies ───────────────────────────────────────────
+# Copy requirements first so Docker can cache this layer.
+# If requirements.serve.txt is unchanged, pip does not re-run on rebuilds —
+# this makes iterative development builds much faster.
+COPY requirements.serve.txt .
+RUN pip install --no-cache-dir -r requirements.serve.txt
+
+# ── 3. Copy application source code ──────────────────────────────────────────
+# Only src/ is needed at runtime:
+#   src/serve/app.py        — FastAPI application
+#   src/serve/schema.py     — Pydantic request/response models
+#   src/serve/static/       — HTML UI
+#   src/config.py           — get_mlflow_tracking_uri() helper
+#   src/__init__.py
+#
+# data/, docs/, reports/, scripts/, .env are excluded via .dockerignore.
+# The model itself is NOT baked in — it is downloaded from MLflow Registry
+# at startup via MLFLOW_TRACKING_URI. This keeps the image small and means
+# you can promote a new Production model without rebuilding the image.
+COPY src ./src
+
+# ── 4. Expose port ────────────────────────────────────────────────────────────
+# Documents which port the app listens on.
+# ECS task definitions and ALB target groups reference this port.
+EXPOSE 8080
+
+# ── 5. Start command ──────────────────────────────────────────────────────────
+# --host 0.0.0.0  : bind to all interfaces (required for Docker port mapping)
+# --port 8080     : must match EXPOSE above and the -p flag in docker run
+# No --reload     : reload is for development only; in production it would
+#                   cause the model to re-download on every file change
+CMD ["uvicorn", "src.serve.app:app", "--host", "0.0.0.0", "--port", "8080"]

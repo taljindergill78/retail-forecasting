@@ -1,16 +1,45 @@
-# Exclude from Docker build context (see docs/PHASE_B_STEP_5_PACKAGE_CODE_DOCKER_ECR_GUIDE.md Appendix D.4, D.5)
+# Exclude from Docker build context
+# Applies to both the training image (Dockerfile) and the serving image
+# (docker/Dockerfile.serve). Keeps the build context small and prevents
+# secrets from being accidentally included in either image.
+
+# Version control
 .git
+.gitignore
+
+# Python environments and caches
 .venv
+.venv311
 venv
 __pycache__
 *.pyc
+*.pyo
 .pytest_cache
 .mypy_cache
+
+# Data — never bake data into any image; model is loaded from MLflow at startup
 data/
-reports/
 models/
+mlruns/
+mlflow.db
+
+# Documentation and reports (not needed at runtime)
+docs/
+reports/
+
+# Secrets — NEVER copy these into an image
 *.pem
 .env
+.env.*
 infra/sagemaker_config.env
+
+# DVC pipeline files (not needed at runtime)
 dvc.lock
 .dvc/
+
+# Misc
+.DS_Store
+*.tar
+*.tar.gz
+*.zip
+catboost_info/
