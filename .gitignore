@@ -17,6 +17,9 @@ data/mlflow_run_id.txt
 
 # Documentation files (personal notes, not for GitHub)
 docs/
+
+# Learning / explanation notes (personal, not for GitHub)
+learn/
 Guideliness.txt
 current_progress.txt
 reports/*.md

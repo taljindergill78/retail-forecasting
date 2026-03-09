@@ -1,8 +1,8 @@
 # Retail Sales Forecasting (Walmart)
 
-A production-style ML pipeline for weekly retail sales forecasting. The project covers data ingestion (S3 → RDS), reproducible ML with DVC, experiment tracking with MLflow, and a path toward deployment on AWS (SageMaker, then serving and EKS as later phases).
+A production-style ML pipeline for weekly retail sales forecasting. The project covers data ingestion (S3 → RDS), reproducible ML with DVC, experiment tracking with MLflow, live serving on AWS with FastAPI + Docker + ECS Fargate + ALB, and the next phase of CI/CD and monitoring.
 
-**Status:** The full pipeline runs locally (split → EDA → features → baselines → train → evaluate). AWS Phase B (SageMaker) is in progress: infrastructure and script adaptation are done; running and chaining SageMaker jobs is the next step.
+**Status:** Training is complete on SageMaker with MLflow-only model governance, and the serving stack is live on AWS behind an ALB. The immediate next phase is CI/CD automation.
 
 ---
 
@@ -16,6 +16,7 @@ A production-style ML pipeline for weekly retail sales forecasting. The project 
 - [Setup and Run (Local)](#setup-and-run-local)
 - [Pipeline Stages (DVC)](#pipeline-stages-dvc)
 - [Configuration](#configuration)
+- [Live Serving (Phase C)](#live-serving-phase-c)
 - [AWS and Phase B (SageMaker)](#aws-and-phase-b-sagemaker)
 - [Next Steps (Planned)](#next-steps-planned)
 - [References](#references)
@@ -45,11 +46,17 @@ S3 (raw CSVs) → Glue ETL → RDS (retailds: fact_sales_weekly, dim_store, dim_
                     split → eda → features → baselines → train → evaluate
                                     ↓
                     data/splits, data/*.csv, models/, reports/
-                    MLflow (local SQLite or remote server)
+                    MLflow Model Registry (Staging / Production)
+                                    ↓
+                    Phase C: FastAPI serving container
+                    Docker → ECR → ECS Fargate → ALB (public URL)
+                                    ↓
+                    Users: GET /, GET /health, POST /predict
 ```
 
 - **Local:** You run `dvc repro` from the project root. Scripts read/write under `data/`, `models/`, `reports/` and use `params.yaml` and (optionally) `.env` for DB credentials.
 - **SageMaker (Phase B):** The same scripts run inside containers. Inputs/outputs are wired via env vars (`SPLITS_DIR`, `DATA_DIR`, `MODELS_DIR`, `REPORTS_DIR`, `MLFLOW_TRACKING_URI`) so they use SageMaker Processing/Training job paths; outputs are uploaded to S3.
+- **Serving (Phase C):** The FastAPI app runs in Docker on ECS Fargate behind an ALB. It loads only `models:/RetailSalesForecaster/Production` from MLflow at startup. The model is not baked into the image.
 
 ---
 
@@ -68,7 +75,32 @@ S3 (raw CSVs) → Glue ETL → RDS (retailds: fact_sales_weekly, dim_store, dim_
 | **Config** | ✅ | `src/config.py` — `load_params()`, `get_data_dir()`, `get_splits_dir()`, `get_models_dir()`, `get_reports_dir()`, `get_mlflow_tracking_uri()` for local and SageMaker |
 | **DVC** | ✅ | Full pipeline in `dvc.yaml`; remote S3 for cache (`dvc push` / `dvc pull`) |
 | **Docker** | ✅ | `docker/Dockerfile.train` for SageMaker training (Python 3.11, `WORKDIR /opt/ml/code`, `ENTRYPOINT ["python"]`); `docker/Dockerfile.serve` for the FastAPI serving container |
-| **Phase B (SageMaker)** | In progress | Steps 1–6 done (IAM, VPC, S3, MLflow on EC2, image in ECR, scripts adapted for env-based paths). Step 7 (run SageMaker jobs one by one, then chain) is next. |
+| **Phase B (SageMaker)** | ✅ | SageMaker jobs completed; MLflow-only governance established |
+| **Phase C (Serving)** | ✅ | FastAPI app, schema, HTML UI, Docker, ECR, ECS Fargate, ALB, autoscaling (1–2 tasks, CPU 60%) |
+
+---
+
+## Live Serving (Phase C)
+
+The prediction API is live on AWS. It loads only `models:/RetailSalesForecaster/Production` from MLflow at startup.
+
+| Resource | Value |
+|----------|-------|
+| **Live URL** | `http://retail-forecasting-alb-466633449.us-west-2.elb.amazonaws.com` |
+| **Health** | `GET /health` → `{"status":"ok","model_loaded":true}` |
+| **Predict** | `POST /predict` with JSON body (see `src/serve/schema.py`) |
+| **Region** | `us-west-2` |
+
+**Verify locally:**
+```bash
+# Health check
+curl -s http://retail-forecasting-alb-466633449.us-west-2.elb.amazonaws.com/health
+
+# Smoke test (requires requests)
+python scripts/smoke_test_serving.py --base-url http://retail-forecasting-alb-466633449.us-west-2.elb.amazonaws.com
+```
+
+**Architecture:** ECS Fargate runs the serving container; ALB provides the public DNS; target group health checks use `GET /health`; autoscaling keeps 1–2 tasks based on CPU (60% target).
 
 ---
 
@@ -92,14 +124,18 @@ retail-forecasting/
 │   │   └── eda.py            # EDA plots and tables
 │   ├── features/
 │   │   └── feature_eng.py     # Feature engineering
-│   └── model/
-│       ├── baseline.py       # Baseline forecast functions
-│       ├── evaluate.py       # WMAE and segment evaluation (library)
-│       ├── run_baselines.py  # Baseline comparison script
-│       ├── train.py          # Model training and selection
-│       ├── evaluate_models.py # Test evaluation and report
-│       ├── generate_all_test_predictions.py  # Optional: regenerate all test preds
-│       └── inspect_predictions.py            # Optional: inspect predictions by store/dept
+│   ├── model/
+│   │   ├── baseline.py       # Baseline forecast functions
+│   │   ├── evaluate.py      # WMAE and segment evaluation (library)
+│   │   ├── run_baselines.py # Baseline comparison script
+│   │   ├── train.py         # Model training and selection
+│   │   ├── evaluate_models.py # Test evaluation and report
+│   │   ├── generate_all_test_predictions.py  # Optional: regenerate all test preds
+│   │   └── inspect_predictions.py           # Optional: inspect predictions by store/dept
+│   └── serve/
+│       ├── app.py           # FastAPI app (GET /, /health, POST /predict)
+│       ├── schema.py        # Pydantic request/response models
+│       └── static/index.html # Browser UI for predictions
 │
 ├── docker/
 │   ├── Dockerfile.train      # SageMaker training image (python:3.11-slim, requirements.txt)
@@ -108,6 +144,10 @@ retail-forecasting/
 ├── tools/
 │   ├── run_manifests.py      # Generate manifest JSONs from params
 │   └── make_manifest.py     # Manifest building helpers
+│
+├── scripts/
+│   ├── smoke_test_serving.py # Smoke test for serving API (health, predict, 422)
+│   └── mlflow_promote_model.py # Promote model version to Staging/Production
 │
 ├── sql/
 │   ├── 01_create_schema.sql  # Tables: dim_store, dim_dept, fact_sales_weekly, staging
@@ -227,12 +267,10 @@ High-level planning and rationale (e.g. why we use **MLflow Model Registry as th
 
 ## Next Steps (Planned)
 
-- **Phase B (SageMaker):** Run and verify each SageMaker job (split, features, train, evaluate), then define a SageMaker Pipeline. Registration/approval is handled in **MLflow Model Registry** via Staging/Production stages (no separate SageMaker Model Registry).
-- **Model registry and approval:** Use **MLflow Model Registry** as the single source of truth. New versions go to **Staging** after manual review; **Production** is the one and only version that downstream systems are allowed to use.
-- **Serving (Phase C):** FastAPI (or similar) in Docker, loading only the MLflow **Production** model (`models:/RetailSalesForecaster/Production`).
-- **Deployment (Phase D):** Deploy the serving API on **ECS Fargate** behind an ALB.
-- **CI/CD (Phase E):** Automate tests and deployment when new models are approved.
-- **Monitoring and batch inference:** Add monitoring, alarms, and optional batch inference (later phases).
+- **Phase D (CI/CD):** Automate tests, image build, ECR push, and ECS deployment when serving changes are pushed.
+- **Phase E (Monitoring):** Add CloudWatch alarms, latency/error monitoring, and a small operational runbook.
+- **Phase F (Batch inference, optional):** Add scheduled inference using EventBridge + ECS RunTask.
+- **Model registry and approval:** Continue using **MLflow Model Registry** as the single source of truth. New versions go to **Staging** after manual review; **Production** is the one and only version that serving is allowed to use.
 
 ---
 
