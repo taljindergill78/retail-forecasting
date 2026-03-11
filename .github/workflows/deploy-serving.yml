@@ -1,0 +1,90 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Deploy Serving
+# ─────────────────────────────────────────────────────────────────────────────
+# Trigger: push to main, or manual "Run workflow".
+# Job: Test (syntax, import, unit tests, smoke script, Docker build)
+#       → Build & Push (tag image with Git SHA, push to ECR).
+# ECS deploy and post-deploy smoke test will be added in later steps.
+#
+# Required GitHub configuration (Settings → Secrets and variables → Actions):
+#   Secrets:    AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+#   Variables:  AWS_REGION (e.g. us-west-2), ECR_REPOSITORY (e.g. retail-forecasting-api)
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: Deploy Serving
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy-serving:
+    name: Test, Build & Push
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── Setup ─────────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies (serving + test)
+        run: |
+          pip install -r requirements.serve.txt
+          pip install -r requirements-dev.txt
+
+      # ── Test stage (Step 2) ───────────────────────────────────────────────
+      - name: Compile serving code (app)
+        run: python -m py_compile src/serve/app.py
+
+      - name: Compile serving code (schema)
+        run: python -m py_compile src/serve/schema.py
+
+      - name: Import serving code
+        run: PYTHONPATH=. python -c "import src.serve.app; import src.serve.schema"
+
+      - name: Run unit tests
+        run: PYTHONPATH=. python -m pytest tests/serve -v
+
+      - name: Compile smoke test script
+        run: python -m py_compile scripts/smoke_test_serving.py
+
+      - name: Smoke test script (run with --help)
+        run: python scripts/smoke_test_serving.py --help
+
+      - name: Build Docker image (verify Dockerfile)
+        run: docker build -f docker/Dockerfile.serve --platform linux/amd64 -t retail-forecasting-api:ci .
+
+      # ── Build & Push stage (Step 3) ──────────────────────────────────────
+      - name: Get short Git SHA
+        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set ECR URI and tag image
+        id: ecr
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          ECR_URI="${ACCOUNT_ID}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ vars.ECR_REPOSITORY }}"
+          REGISTRY="${ACCOUNT_ID}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com"
+          echo "ECR_URI=${ECR_URI}" >> $GITHUB_ENV
+          echo "REGISTRY=${REGISTRY}" >> $GITHUB_ENV
+          docker tag retail-forecasting-api:ci "${ECR_URI}:${SHORT_SHA}"
+
+      - name: Log in to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ${{ vars.AWS_REGION }} | \
+            docker login --username AWS --password-stdin $REGISTRY
+
+      - name: Push image to ECR
+        run: docker push ${ECR_URI}:${SHORT_SHA}
