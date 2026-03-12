@@ -4,11 +4,13 @@
 # Trigger: push to main, or manual "Run workflow".
 # Job: Test (syntax, import, unit tests, smoke script, Docker build)
 #       → Build & Push (tag image with Git SHA, push to ECR).
-# ECS deploy and post-deploy smoke test will be added in later steps.
+#       → Deploy to ECS (force new deployment so service pulls :latest again)
+#       → Post-deploy smoke test (ALB /health).
 #
 # Required GitHub configuration (Settings → Secrets and variables → Actions):
 #   Secrets:    AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 #   Variables:  AWS_REGION (e.g. us-west-2), ECR_REPOSITORY (e.g. retail-forecasting-api)
+#               ECS_CLUSTER, ECS_SERVICE, ALB_BASE_URL
 # ─────────────────────────────────────────────────────────────────────────────
 
 name: Deploy Serving
@@ -20,7 +22,7 @@ on:
 
 jobs:
   deploy-serving:
-    name: Test, Build & Push
+    name: Test, Build, Push & Deploy
     runs-on: ubuntu-latest
 
     steps:
@@ -93,3 +95,50 @@ jobs:
         run: |
           docker tag ${ECR_URI}:${SHORT_SHA} ${ECR_URI}:latest
           docker push ${ECR_URI}:latest
+
+      # ── ECS Deploy stage (Step 4 force new deployment) ───────────
+      - name: Force new ECS deployment (pull :latest again)
+        env:
+          ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+          ECS_SERVICE: ${{ vars.ECS_SERVICE }}
+        run: |
+          echo "Forcing new deployment so ECS pulls :latest (${ECR_URI}:latest)"
+          aws ecs update-service \
+            --cluster "${ECS_CLUSTER}" \
+            --service "${ECS_SERVICE}" \
+            --force-new-deployment \
+            --region "${{ vars.AWS_REGION }}"
+
+      - name: Wait for ECS service to become stable
+        env:
+          ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+          ECS_SERVICE: ${{ vars.ECS_SERVICE }}
+        run: |
+          aws ecs wait services-stable \
+            --cluster "${ECS_CLUSTER}" \
+            --services "${ECS_SERVICE}" \
+            --region "${{ vars.AWS_REGION }}"
+
+      - name: Post-deploy smoke test (ALB /health)
+        env:
+          ALB_BASE_URL: ${{ vars.ALB_BASE_URL }}
+        run: |
+          if [ -z "${ALB_BASE_URL}" ]; then
+            echo "ALB_BASE_URL is not set; skipping smoke test."
+            exit 0
+          fi
+
+          URL="${ALB_BASE_URL%/}/health"
+          echo "Checking: ${URL}"
+
+          for i in {1..30}; do
+            if curl -fsS "${URL}" >/dev/null; then
+              echo "Smoke test passed."
+              exit 0
+            fi
+            echo "Not ready yet (attempt ${i}/30). Sleeping 10s..."
+            sleep 10
+          done
+
+          echo "Smoke test failed after retries."
+          exit 1
